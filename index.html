@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Theos — Teólogo Católico</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- Settings overlay (click to close panel) -->
+  <div id="settings-overlay" aria-hidden="true"></div>
+
+  <!-- Settings panel (slide-in drawer) -->
+  <aside id="settings-panel" role="complementary" aria-label="Configuración">
+    <div class="settings-header">
+      <h2>Configuración</h2>
+      <button id="settings-close-btn" aria-label="Cerrar configuración">&times;</button>
+    </div>
+
+    <label for="api-key-input">API Key de Anthropic</label>
+    <input
+      id="api-key-input"
+      type="password"
+      placeholder="sk-ant-..."
+      autocomplete="off"
+      spellcheck="false"
+    />
+    <p class="settings-hint">
+      La clave se guarda solo en <code>sessionStorage</code> (se borra al cerrar la pestaña).
+      Nunca se envía a ningún servidor propio.
+    </p>
+
+    <label for="model-select">Modelo</label>
+    <select id="model-select">
+      <option value="claude-sonnet-4-6">claude-sonnet-4-6 (recomendado)</option>
+      <option value="claude-opus-4-6">claude-opus-4-6 (más profundo, más lento)</option>
+    </select>
+
+    <div class="settings-divider"></div>
+
+    <button id="clear-btn" class="btn-secondary">Borrar historial</button>
+
+    <div id="proxy-status" class="proxy-status"></div>
+  </aside>
+
+  <!-- App shell -->
+  <div id="app">
+
+    <header id="app-header">
+      <div class="header-inner">
+        <div class="header-title">
+          <span class="header-icon" aria-hidden="true">✝</span>
+          <h1>Theos</h1>
+          <span class="header-subtitle">Teólogo Católico</span>
+        </div>
+        <button id="settings-btn" aria-label="Abrir configuración" title="Configuración">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Message list -->
+    <main id="chat-container" role="log" aria-live="polite" aria-label="Conversación">
+      <div id="messages"></div>
+
+      <!-- Typing indicator -->
+      <div id="typing-indicator" aria-label="El teólogo está escribiendo" role="status">
+        <div class="bubble typing-bubble">
+          <span class="dot"></span>
+          <span class="dot"></span>
+          <span class="dot"></span>
+        </div>
+      </div>
+    </main>
+
+    <!-- Input area -->
+    <footer id="input-area">
+      <div class="input-inner">
+        <textarea
+          id="user-input"
+          placeholder="Escribe tu pregunta… (Enter para enviar, Shift+Enter para nueva línea)"
+          rows="1"
+          aria-label="Mensaje"
+          autocomplete="off"
+          spellcheck="true"
+        ></textarea>
+        <button id="send-btn" aria-label="Enviar mensaje" title="Enviar">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="22" y1="2" x2="11" y2="13"/>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+        </button>
+      </div>
+      <p id="input-hint">
+        <kbd>Enter</kbd> enviar &nbsp;·&nbsp; <kbd>Shift+Enter</kbd> nueva línea
+      </p>
+    </footer>
+
+  </div><!-- /#app -->
+
+  <!-- Dependencies (CDN, no build step) -->
+  <script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
+  <script src="app.js"></script>
+
+</body>
+</html>

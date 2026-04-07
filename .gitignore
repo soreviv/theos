@@ -1,0 +1,12 @@
+# Environment — NEVER commit real API keys
+.env
+
+# Node
+node_modules/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local config overrides
+config.local.js
