@@ -18,11 +18,18 @@
       <button id="settings-close-btn" aria-label="Cerrar configuración">&times;</button>
     </div>
 
-    <label for="api-key-input">API Key de Anthropic</label>
+    <label for="provider-select">Proveedor</label>
+    <select id="provider-select">
+      <option value="openai">OpenAI (ChatGPT)</option>
+      <option value="anthropic">Anthropic (Claude)</option>
+      <option value="gemini">Google (Gemini)</option>
+    </select>
+
+    <label id="api-key-label" for="api-key-input">API Key</label>
     <input
       id="api-key-input"
       type="password"
-      placeholder="sk-ant-..."
+      placeholder="sk-..."
       autocomplete="off"
       spellcheck="false"
     />
@@ -33,8 +40,7 @@
 
     <label for="model-select">Modelo</label>
     <select id="model-select">
-      <option value="claude-sonnet-4-6">claude-sonnet-4-6 (recomendado)</option>
-      <option value="claude-opus-4-6">claude-opus-4-6 (más profundo, más lento)</option>
+      <!-- Opciones cargadas dinámicamente por app.js según el proveedor -->
     </select>
 
     <div class="settings-divider"></div>

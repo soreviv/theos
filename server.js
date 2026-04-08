@@ -1,20 +1,13 @@
 /**
- * server.js — Optional Express proxy for Theos
+ * server.js — Express proxy for Theos
  *
- * WHY: Keeps your Anthropic API key server-side.
- *      The browser calls POST /api/chat; this server forwards
- *      the request to Anthropic and streams the SSE response back.
- *
- * USAGE:
- *   cp .env.example .env   # add your real key
- *   npm install
- *   npm start              # or: npm run dev  (auto-restarts on change)
- *   Open http://localhost:3000
+ * Supports three providers: Anthropic, OpenAI, Gemini.
+ * The browser calls POST /api/chat with { provider, model, messages }.
+ * This server routes to the right upstream API, streams the response back.
  */
 
 import express from 'express';
 import { createServer } from 'http';
-import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import path from 'path';
 import dotenv from 'dotenv';
@@ -22,58 +15,118 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const PORT      = process.env.PORT || 3000;
-const API_KEY   = process.env.ANTHROPIC_API_KEY;
+const PORT = process.env.PORT || 3000;
 
-if (!API_KEY) {
-  console.error('[theos] ANTHROPIC_API_KEY is not set. Copy .env.example to .env and add your key.');
+const KEYS = {
+  anthropic: process.env.ANTHROPIC_API_KEY || '',
+  openai:    process.env.OPENAI_API_KEY    || '',
+  gemini:    process.env.GEMINI_API_KEY    || '',
+};
+
+const availableProviders = Object.entries(KEYS)
+  .filter(([, v]) => v)
+  .map(([k]) => k);
+
+if (availableProviders.length === 0) {
+  console.error('[theos] No API keys configured. Add at least one to .env');
   process.exit(1);
 }
 
 const app = express();
-
-// Serve static frontend files
 app.use(express.static(__dirname));
 app.use(express.json({ limit: '1mb' }));
 
 // ─── Health check ─────────────────────────────────────────────
-// Frontend calls this on init to detect proxy mode
 app.get('/api/health', (_req, res) => {
-  res.json({ ok: true, mode: 'proxy' });
+  res.json({ ok: true, mode: 'proxy', providers: availableProviders });
 });
 
 // ─── Chat proxy ───────────────────────────────────────────────
 app.post('/api/chat', async (req, res) => {
+  const { provider = 'openai', model, messages, max_tokens = 2048 } = req.body;
+
+  const key = KEYS[provider];
+  if (!key) {
+    return res.status(400).json({ error: { message: `Proveedor '${provider}' no está configurado en el servidor.` } });
+  }
+
   try {
-    const upstream = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'x-api-key':         API_KEY,
-        'anthropic-version': '2023-06-01',
-        'content-type':      'application/json',
-      },
-      body: JSON.stringify(req.body),
-    });
+    let upstream;
+
+    if (provider === 'anthropic') {
+      const systemMsg   = messages.find(m => m.role === 'system');
+      const chatMessages = messages.filter(m => m.role !== 'system');
+      upstream = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'x-api-key':         key,
+          'anthropic-version': '2023-06-01',
+          'content-type':      'application/json',
+        },
+        body: JSON.stringify({
+          model,
+          max_tokens,
+          system:   systemMsg?.content,
+          messages: chatMessages,
+          stream:   true,
+        }),
+      });
+
+    } else if (provider === 'openai') {
+      upstream = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${key}`,
+          'Content-Type':  'application/json',
+        },
+        body: JSON.stringify({ model, max_tokens, messages, stream: true }),
+      });
+
+    } else if (provider === 'gemini') {
+      const systemMsg = messages.find(m => m.role === 'system');
+      const contents  = messages
+        .filter(m => m.role !== 'system')
+        .map(m => ({
+          role:  m.role === 'assistant' ? 'model' : 'user',
+          parts: [{ text: m.content }],
+        }));
+
+      const geminiBody = {
+        contents,
+        generationConfig: { maxOutputTokens: max_tokens },
+      };
+      if (systemMsg) {
+        geminiBody.systemInstruction = { parts: [{ text: systemMsg.content }] };
+      }
+
+      upstream = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?key=${key}&alt=sse`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(geminiBody),
+        }
+      );
+    } else {
+      return res.status(400).json({ error: { message: `Proveedor desconocido: ${provider}` } });
+    }
 
     if (!upstream.ok) {
       const errBody = await upstream.text();
       return res.status(upstream.status).send(errBody);
     }
 
-    // Pipe SSE stream straight through — preserves real-time streaming
     res.setHeader('Content-Type',  upstream.headers.get('content-type') || 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection',    'keep-alive');
+    res.setHeader('X-Provider',    provider);
 
     const reader = upstream.body.getReader();
-    const pump   = async () => {
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) { res.end(); return; }
-        res.write(value);
-      }
-    };
-    await pump();
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) { res.end(); return; }
+      res.write(value);
+    }
 
   } catch (err) {
     console.error('[theos] Proxy error:', err.message);
@@ -90,5 +143,5 @@ app.get('*', (_req, res) => {
 
 createServer(app).listen(PORT, () => {
   console.log(`[theos] Running at http://localhost:${PORT}`);
-  console.log(`[theos] Mode: proxy (API key protected server-side)`);
+  console.log(`[theos] Providers available: ${availableProviders.join(', ')}`);
 });

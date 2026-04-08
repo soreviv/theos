@@ -115,16 +115,51 @@ ESTILO DE RESPUESTA:
 - Respondes en el idioma en que te hablan.`;
 
 // ──────────────────────────────────────────────────────────────
-// 2. STATE
+// 2. PROVIDER / MODEL CONFIG
+// ──────────────────────────────────────────────────────────────
+const PROVIDERS = {
+  openai: {
+    label:       'OpenAI (ChatGPT)',
+    keyLabel:    'API Key de OpenAI',
+    keyHint:     'sk-...',
+    models: [
+      { value: 'gpt-4o',      label: 'gpt-4o (recomendado)' },
+      { value: 'gpt-4o-mini', label: 'gpt-4o-mini (rápido y económico)' },
+      { value: 'gpt-4.1',     label: 'gpt-4.1 (más profundo)' },
+    ],
+  },
+  anthropic: {
+    label:       'Anthropic (Claude)',
+    keyLabel:    'API Key de Anthropic',
+    keyHint:     'sk-ant-...',
+    models: [
+      { value: 'claude-sonnet-4-6', label: 'claude-sonnet-4-6 (recomendado)' },
+      { value: 'claude-opus-4-6',   label: 'claude-opus-4-6 (más profundo)' },
+    ],
+  },
+  gemini: {
+    label:       'Google (Gemini)',
+    keyLabel:    'API Key de Google AI',
+    keyHint:     'AIza...',
+    models: [
+      { value: 'gemini-2.0-flash', label: 'gemini-2.0-flash (recomendado)' },
+      { value: 'gemini-1.5-pro',   label: 'gemini-1.5-pro (más profundo)' },
+    ],
+  },
+};
+
+// ──────────────────────────────────────────────────────────────
+// 3. STATE
 // ──────────────────────────────────────────────────────────────
 const state = {
   conversationHistory: [],  // [{role:'user'|'assistant', content:'...'}]
   isLoading: false,
   useBackendProxy: false,   // set to true if /api/health responds
+  availableProviders: [],   // populated from /api/health in proxy mode
 };
 
 // ──────────────────────────────────────────────────────────────
-// 3. DOM REFERENCES
+// 4. DOM REFERENCES
 // ──────────────────────────────────────────────────────────────
 const DOM = {
   messages:        document.getElementById('messages'),
@@ -135,6 +170,8 @@ const DOM = {
   settingsOverlay: document.getElementById('settings-overlay'),
   settingsBtn:     document.getElementById('settings-btn'),
   settingsCloseBtn:document.getElementById('settings-close-btn'),
+  providerSelect:  document.getElementById('provider-select'),
+  apiKeyLabel:     document.getElementById('api-key-label'),
   apiKeyInput:     document.getElementById('api-key-input'),
   modelSelect:     document.getElementById('model-select'),
   clearBtn:        document.getElementById('clear-btn'),
@@ -143,62 +180,94 @@ const DOM = {
 };
 
 // ──────────────────────────────────────────────────────────────
-// 4. API CALL
+// 5. API CALL
 // ──────────────────────────────────────────────────────────────
 
-/**
- * Sends the conversation to Anthropic (direct or via proxy) and
- * streams the response token-by-token into a pre-created bubble.
- *
- * @param {HTMLElement} bubbleEl - The bubble element to fill while streaming
- * @returns {string} Full assistant text (resolved once stream ends)
- */
-async function callAnthropicAPI(bubbleEl) {
-  const apiKey   = DOM.apiKeyInput.value.trim();
+/** Routes the API call to the selected provider. */
+async function callAPI(bubbleEl) {
+  const provider = DOM.providerSelect.value;
   const model    = DOM.modelSelect.value;
-  const endpoint = state.useBackendProxy
-    ? '/api/chat'
-    : 'https://api.anthropic.com/v1/messages';
+  const apiKey   = DOM.apiKeyInput.value.trim();
+  const messages = [
+    { role: 'system', content: SYSTEM_PROMPT },
+    ...state.conversationHistory,
+  ];
 
-  const headers = { 'Content-Type': 'application/json' };
-  if (!state.useBackendProxy) {
-    if (!apiKey) throw new Error('Por favor introduce tu API key en Configuración.');
-    headers['x-api-key']            = apiKey;
-    headers['anthropic-version']    = '2023-06-01';
-    // Required header for direct browser access (Anthropic CORS policy)
-    headers['anthropic-dangerous-direct-browser-access'] = 'true';
+  if (state.useBackendProxy) {
+    return callProxy(bubbleEl, provider, model, messages);
   }
 
-  const body = {
-    model,
-    max_tokens: 2048,
-    system: SYSTEM_PROMPT,
-    messages: state.conversationHistory,
-    stream: true,
-  };
+  if (!apiKey) throw new Error('Por favor introduce tu API key en Configuración.');
+  return callDirect(bubbleEl, provider, model, apiKey, messages);
+}
 
-  const res = await fetch(endpoint, {
+/** Calls the server proxy — the server handles routing and key management. */
+async function callProxy(bubbleEl, provider, model, messages) {
+  const res = await fetch('/api/chat', {
     method: 'POST',
-    headers,
-    body: JSON.stringify(body),
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ provider, model, messages, max_tokens: 2048 }),
   });
 
   if (!res.ok) {
     let errMsg = `Error de API: ${res.status}`;
-    try {
-      const errJson = await res.json();
-      if (errJson?.error?.message) errMsg = errJson.error.message;
-    } catch { /* ignore */ }
+    try { const j = await res.json(); if (j?.error?.message) errMsg = j.error.message; }
+    catch { /* ignore */ }
     throw new Error(errMsg);
   }
 
-  return readStream(res.body, bubbleEl);
+  return readStream(res.body, bubbleEl, provider);
+}
+
+/** Calls the provider API directly from the browser (direct mode, no proxy). */
+async function callDirect(bubbleEl, provider, model, apiKey, messages) {
+  let endpoint, headers, body;
+
+  if (provider === 'anthropic') {
+    endpoint = 'https://api.anthropic.com/v1/messages';
+    headers  = {
+      'Content-Type':                                    'application/json',
+      'x-api-key':                                       apiKey,
+      'anthropic-version':                               '2023-06-01',
+      'anthropic-dangerous-direct-browser-access':       'true',
+    };
+    const system  = messages.find(m => m.role === 'system');
+    const chat    = messages.filter(m => m.role !== 'system');
+    body = { model, max_tokens: 2048, system: system?.content, messages: chat, stream: true };
+
+  } else if (provider === 'openai') {
+    endpoint = 'https://api.openai.com/v1/chat/completions';
+    headers  = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` };
+    body = { model, max_tokens: 2048, messages, stream: true };
+
+  } else if (provider === 'gemini') {
+    const system   = messages.find(m => m.role === 'system');
+    const contents = messages
+      .filter(m => m.role !== 'system')
+      .map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] }));
+    endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?key=${apiKey}&alt=sse`;
+    headers  = { 'Content-Type': 'application/json' };
+    body = { contents, generationConfig: { maxOutputTokens: 2048 } };
+    if (system) body.systemInstruction = { parts: [{ text: system.content }] };
+  }
+
+  const res = await fetch(endpoint, { method: 'POST', headers, body: JSON.stringify(body) });
+
+  if (!res.ok) {
+    let errMsg = `Error de API: ${res.status}`;
+    try { const j = await res.json(); if (j?.error?.message) errMsg = j.error.message; }
+    catch { /* ignore */ }
+    throw new Error(errMsg);
+  }
+
+  return readStream(res.body, bubbleEl, provider);
 }
 
 /**
- * Reads an Anthropic SSE stream and renders text into bubbleEl in real time.
+ * Reads an SSE stream from any provider and renders text into bubbleEl.
+ * Parses the delta format specific to each provider.
  */
-async function readStream(body, bubbleEl) {
+async function readStream(body, bubbleEl, provider) {
   const reader  = body.getReader();
   const decoder = new TextDecoder();
   let fullText  = '';
@@ -210,7 +279,6 @@ async function readStream(body, bubbleEl) {
 
     buffer += decoder.decode(value, { stream: true });
     const lines = buffer.split('\n');
-    // Keep the last (possibly incomplete) line in the buffer
     buffer = lines.pop();
 
     for (const line of lines) {
@@ -221,19 +289,25 @@ async function readStream(body, bubbleEl) {
       let event;
       try { event = JSON.parse(data); } catch { continue; }
 
-      if (
-        event.type === 'content_block_delta' &&
-        event.delta?.type === 'text_delta' &&
-        event.delta.text
-      ) {
-        fullText += event.delta.text;
+      let delta = null;
+      if (provider === 'anthropic') {
+        if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta') {
+          delta = event.delta.text;
+        }
+      } else if (provider === 'openai') {
+        delta = event.choices?.[0]?.delta?.content ?? null;
+      } else if (provider === 'gemini') {
+        delta = event.candidates?.[0]?.content?.parts?.[0]?.text ?? null;
+      }
+
+      if (delta) {
+        fullText += delta;
         renderMarkdown(bubbleEl, fullText);
         scrollToBottom();
       }
     }
   }
 
-  // Ensure final render (including any trailing buffer)
   renderMarkdown(bubbleEl, fullText);
   scrollToBottom();
   return fullText;
@@ -347,7 +421,7 @@ async function sendMessage() {
   const bubbleEl = createAssistantBubble();
 
   try {
-    const fullText = await callAnthropicAPI(bubbleEl);
+    const fullText = await callAPI(bubbleEl);
     state.conversationHistory.push({ role: 'assistant', content: fullText });
   } catch (err) {
     // Remove the empty assistant bubble if nothing was streamed
@@ -363,7 +437,36 @@ async function sendMessage() {
 }
 
 // ──────────────────────────────────────────────────────────────
-// 7. UI HELPERS
+// 7. PROVIDER / MODEL UI HELPERS
+// ──────────────────────────────────────────────────────────────
+
+/** Populates the model <select> based on the chosen provider. */
+function updateModelOptions(provider) {
+  const cfg = PROVIDERS[provider];
+  DOM.modelSelect.innerHTML = cfg.models
+    .map(m => `<option value="${m.value}">${m.label}</option>`)
+    .join('');
+}
+
+/** Updates API key label and placeholder to match the provider. */
+function updateApiKeyField(provider) {
+  const cfg = PROVIDERS[provider];
+  DOM.apiKeyLabel.textContent    = cfg.keyLabel;
+  DOM.apiKeyInput.placeholder    = cfg.keyHint;
+}
+
+/** Rebuilds the provider <select> based on available providers (proxy mode). */
+function updateProviderOptions(available) {
+  Array.from(DOM.providerSelect.options).forEach(opt => {
+    opt.disabled = available.length > 0 && !available.includes(opt.value);
+  });
+  // Select first available
+  const first = available[0] || DOM.providerSelect.value;
+  DOM.providerSelect.value = first;
+}
+
+// ──────────────────────────────────────────────────────────────
+// 8. UI HELPERS
 // ──────────────────────────────────────────────────────────────
 function setLoading(loading) {
   state.isLoading = loading;
@@ -394,7 +497,7 @@ function closeSettings() {
 }
 
 // ──────────────────────────────────────────────────────────────
-// 8. EVENT LISTENERS
+// 9. EVENT LISTENERS
 // ──────────────────────────────────────────────────────────────
 function attachEvents() {
   // Send on Enter, newline on Shift+Enter
@@ -423,6 +526,16 @@ function attachEvents() {
     }
   });
 
+  // Provider change — update models and API key field
+  DOM.providerSelect.addEventListener('change', () => {
+    const provider = DOM.providerSelect.value;
+    updateModelOptions(provider);
+    updateApiKeyField(provider);
+    // Clear history when switching providers to avoid format mismatches
+    state.conversationHistory = [];
+    renderWelcome();
+  });
+
   // Persist API key to sessionStorage (tab-scoped — safer than localStorage)
   DOM.apiKeyInput.addEventListener('input', () => {
     const val = DOM.apiKeyInput.value.trim();
@@ -444,7 +557,7 @@ function attachEvents() {
 }
 
 // ──────────────────────────────────────────────────────────────
-// 9. INITIALISATION
+// 10. INITIALISATION
 // ──────────────────────────────────────────────────────────────
 async function init() {
   // Restore API key saved during this browser session
@@ -453,13 +566,28 @@ async function init() {
     if (saved) DOM.apiKeyInput.value = saved;
   } catch { /* ignore */ }
 
+  // Bootstrap provider/model selectors with default provider (openai)
+  const defaultProvider = DOM.providerSelect.value || 'openai';
+  updateModelOptions(defaultProvider);
+  updateApiKeyField(defaultProvider);
+
   // Non-blocking check for backend proxy
-  // If /api/health responds, route all calls through the server (key stays server-side)
   try {
     const health = await fetch('/api/health', { signal: AbortSignal.timeout(1500) });
     if (health.ok) {
-      state.useBackendProxy = true;
-      DOM.proxyStatus.textContent = '✓ Modo servidor activo — API key protegida';
+      const data = await health.json();
+      state.useBackendProxy      = true;
+      state.availableProviders   = data.providers || [];
+
+      // Restrict provider selector to what the server has keys for
+      if (state.availableProviders.length > 0) {
+        updateProviderOptions(state.availableProviders);
+        const provider = DOM.providerSelect.value;
+        updateModelOptions(provider);
+        updateApiKeyField(provider);
+      }
+
+      DOM.proxyStatus.textContent = '✓ Modo servidor activo — API keys protegidas';
       DOM.proxyStatus.className   = 'proxy-status active';
       DOM.apiKeyInput.disabled    = true;
       DOM.apiKeyInput.placeholder = 'Gestionada por el servidor';
