@@ -109,7 +109,8 @@ body {
   margin-left: 2px;
 }
 
-#settings-btn {
+#settings-btn,
+.ref-link-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -121,10 +122,18 @@ body {
   color: var(--color-text-muted);
   cursor: pointer;
   transition: background var(--transition), color var(--transition);
+  text-decoration: none;
 }
-#settings-btn:hover {
+#settings-btn:hover,
+.ref-link-btn:hover {
   background: var(--color-accent-light);
   color: var(--color-accent);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 /* ============================================================
@@ -562,6 +571,28 @@ body {
 }
 .proxy-status.active  { color: #2e7d32; }
 .proxy-status.direct  { color: var(--color-text-muted); }
+
+/* ============================================================
+   Legal Footer
+   ============================================================ */
+#legal-footer {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 6px 16px;
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+  font-size: .72rem;
+  color: var(--color-text-muted);
+}
+#legal-footer a {
+  color: var(--color-text-muted);
+  text-decoration: none;
+  transition: color var(--transition);
+}
+#legal-footer a:hover { color: var(--color-accent); }
 
 /* ============================================================
    Scrollbar (webkit)

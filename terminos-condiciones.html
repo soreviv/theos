@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Términos y Condiciones — Theos</title>
+  <meta name="description" content="Términos y condiciones de uso de Theos. Herramienta educativa de teología católica impulsada por IA. Sin valor magisterial ni sustitución de dirección espiritual." />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://viveros.click/terminos-condiciones" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body { overflow: auto; height: auto; min-height: 100dvh; }
+
+    .ref-header {
+      position: sticky; top: 0; z-index: 10;
+      height: var(--header-h);
+      background: var(--color-surface);
+      border-bottom: 1px solid var(--color-border);
+      box-shadow: var(--shadow-sm);
+    }
+    .ref-header-inner {
+      display: flex; align-items: center; justify-content: space-between;
+      max-width: var(--max-width); margin: 0 auto; padding: 0 16px; height: 100%;
+    }
+    .ref-header-title { display: flex; align-items: center; gap: 8px; }
+    .ref-header-title .header-icon { font-size: 18px; color: var(--color-accent); }
+    .ref-header-title h1 {
+      font-family: var(--font-serif); font-size: 1.2rem;
+      font-weight: 700; color: var(--color-accent);
+    }
+    .ref-header-title span.header-subtitle {
+      font-size: .75rem; color: var(--color-text-muted);
+      border-left: 1px solid var(--color-border); padding-left: 8px; margin-left: 2px;
+    }
+    .back-btn {
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 12px; border: 1.5px solid var(--color-border);
+      border-radius: var(--radius-sm); background: transparent;
+      font-family: var(--font-sans); font-size: .82rem;
+      color: var(--color-text-muted); cursor: pointer; text-decoration: none;
+      transition: border-color var(--transition), color var(--transition), background var(--transition);
+    }
+    .back-btn:hover {
+      border-color: var(--color-accent); color: var(--color-accent);
+      background: var(--color-accent-light);
+    }
+
+    /* Content */
+    .doc-main { max-width: var(--max-width); margin: 0 auto; padding: 40px 16px 64px; }
+
+    .doc-intro { text-align: center; margin-bottom: 48px; }
+    .doc-intro .doc-icon { font-size: 2.2rem; color: var(--color-accent); display: block; margin-bottom: 12px; opacity: .85; }
+    .doc-intro h2 { font-family: var(--font-serif); font-size: 1.6rem; color: var(--color-text); margin-bottom: 8px; }
+    .doc-intro .doc-meta { font-size: .82rem; color: var(--color-text-muted); }
+
+    .doc-section {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 20px; overflow: hidden;
+    }
+    .doc-section-header {
+      display: flex; align-items: center; gap: 12px;
+      padding: 16px 22px;
+      background: var(--color-accent-light);
+      border-bottom: 1px solid var(--color-border);
+    }
+    .doc-section-header .sec-num {
+      font-family: var(--font-serif); font-size: .8rem; font-weight: 700;
+      color: var(--color-accent); background: white;
+      border: 1px solid rgba(107,63,42,.2); border-radius: 50%;
+      width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .doc-section-header h3 {
+      font-family: var(--font-serif); font-size: 1rem; font-weight: 700; color: var(--color-accent);
+    }
+    .doc-section-body { padding: 20px 22px; }
+    .doc-section-body p {
+      font-size: .92rem; line-height: 1.7; color: var(--color-text); margin-bottom: 12px;
+    }
+    .doc-section-body p:last-child { margin-bottom: 0; }
+    .doc-section-body ul { list-style: none; padding: 0; margin: 10px 0; display: flex; flex-direction: column; gap: 8px; }
+    .doc-section-body ul li {
+      display: flex; gap: 10px; font-size: .9rem; line-height: 1.55; color: var(--color-text);
+      align-items: flex-start;
+    }
+    .doc-section-body ul li::before { content: "·"; color: var(--color-accent); font-weight: 900; flex-shrink: 0; margin-top: 1px; }
+    .doc-section-body a { color: var(--color-accent); }
+
+    .canon-box {
+      background: var(--color-accent-light);
+      border: 1px solid rgba(107,63,42,.25);
+      border-left: 4px solid var(--color-accent);
+      border-radius: var(--radius-sm);
+      padding: 16px 18px; margin: 14px 0 0;
+      font-size: .9rem; line-height: 1.7; color: var(--color-text);
+    }
+    .canon-box strong { color: var(--color-accent); }
+
+    .warning-box {
+      background: #fff8e1; border: 1px solid #f0d060;
+      border-radius: var(--radius-sm); padding: 14px 18px;
+      font-size: .88rem; color: #6b5200; line-height: 1.6; margin: 12px 0 0;
+    }
+    .warning-box strong { color: #5a4400; }
+
+    .doc-footer {
+      margin-top: 40px; text-align: center;
+      font-size: .82rem; color: var(--color-text-muted); line-height: 1.6;
+    }
+    .doc-footer a { color: var(--color-accent); }
+
+    @media (max-width: 600px) {
+      .ref-header-title span.header-subtitle { display: none; }
+      .doc-section-body { padding: 16px 18px; }
+      .doc-section-header { padding: 14px 18px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="ref-header">
+    <div class="ref-header-inner">
+      <div class="ref-header-title">
+        <span class="header-icon" aria-hidden="true">✝</span>
+        <h1>Theos</h1>
+        <span class="header-subtitle">Términos y Condiciones</span>
+      </div>
+      <a href="/" class="back-btn" aria-label="Volver al chat">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+        Volver al chat
+      </a>
+    </div>
+  </header>
+
+  <main class="doc-main">
+
+    <div class="doc-intro">
+      <span class="doc-icon" aria-hidden="true">📋</span>
+      <h2>Términos y Condiciones de Uso</h2>
+      <p class="doc-meta">
+        Responsable: <strong>Alejandro Viveros Domínguez</strong> · viveros.click<br>
+        Última actualización: 13 de abril de 2026
+      </p>
+    </div>
+
+    <!-- 1 -->
+    <div class="doc-section">
+      <div class="doc-section-header">
+        <span class="sec-num">1</span>
+        <h3>Naturaleza del servicio</h3>
+      </div>
+      <div class="doc-section-body">
+        <p>
+          <strong>Theos</strong> (disponible en viveros.click) es una herramienta educativa
+          de teología católica impulsada por inteligencia artificial. Su propósito es
+          acompañar la búsqueda personal de fe, facilitar el acceso a las fuentes
+          oficiales de la Iglesia Católica y promover el diálogo interreligioso respetuoso.
+        </p>
+        <p>
+          Theos <strong>no es</strong>:
+        </p>
+        <ul>
+          <li>Un órgano oficial de la Iglesia Católica ni de ninguna diócesis, parroquia o institución eclesiástica</li>
+          <li>Un sustituto de la dirección espiritual personal con un sacerdote o confesor</li>
+          <li>Una fuente de magisterio vinculante ni de doctrina con autoridad canónica</li>
+          <li>Un servicio de consejería psicológica, jurídica o médica</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 2 -->
+    <div class="doc-section">
+      <div class="doc-section-header">
+        <span class="sec-num">2</span>
+        <h3>Exención de responsabilidad canónica</h3>
+      </div>
+      <div class="doc-section-body">
+        <p>
+          Las respuestas generadas por Theos se elaboran con base en fuentes oficiales de la
+          Iglesia Católica (Sagrada Escritura, Catecismo, documentos del Vaticano II,
+          escritos de Padres y Doctores de la Iglesia) y <strong>no constituyen magisterio eclesiástico</strong>
+          en ninguna de sus formas.
+        </p>
+        <div class="canon-box">
+          <strong>Conforme al Código de Derecho Canónico:</strong> La autoridad para enseñar
+          doctrina de manera vinculante corresponde al Romano Pontífice y al Colegio Episcopal
+          en comunión con él (CDC can. 749), así como a los obispos en el ejercicio ordinario
+          de su oficio (can. 752). Una herramienta de inteligencia artificial no posee
+          ni puede ejercer dicha autoridad en ninguna circunstancia.
+        </div>
+        <p style="margin-top:14px;">
+          Ante cualquier duda de conciencia, decisión moral grave o necesidad de dirección
+          espiritual, el usuario debe acudir a un sacerdote o teólogo acreditado.
+          El uso de Theos no exime al usuario de esa responsabilidad personal.
+        </p>
+      </div>
+    </div>
+
+    <!-- 3 -->
+    <div class="doc-section">
+      <div class="doc-section-header">
+        <span class="sec-num">3</span>
+        <h3>Limitaciones de la inteligencia artificial</h3>
+      </div>
+      <div class="doc-section-body">
+        <p>
+          Theos utiliza modelos de lenguaje de gran escala (LLM) provistos por terceros
+          (OpenAI, Anthropic, Google). Estos modelos tienen limitaciones conocidas:
+        </p>
+        <ul>
+          <li>Pueden cometer errores de hecho, incluso citando fuentes reales</li>
+          <li>No tienen acceso en tiempo real a documentos pontificios publicados recientemente</li>
+          <li>Pueden generar texto que suene autoritativo sin que lo sea</li>
+          <li>Su formación previa puede incluir material no verificado sobre temas religiosos</li>
+        </ul>
+        <div class="warning-box">
+          <strong>Recomendación:</strong> Si una respuesta de Theos va a influir en una decisión
+          importante de fe o de conciencia, verifica la fuente citada directamente en el texto
+          oficial (Catecismo, documento conciliar, encíclica) antes de actuar en consecuencia.
+        </div>
+      </div>
+    </div>
+
+    <!-- 4 -->
+    <div class="doc-section">
+      <div class="doc-section-header">
+        <span class="sec-num">4</span>
+        <h3>Uso aceptable</h3>
+      </div>
+      <div class="doc-section-body">
+        <p>El usuario se compromete a utilizar Theos de manera lícita y respetuosa. Queda prohibido:</p>
+        <ul>
+          <li>Usar Theos para generar contenido que atente contra la dignidad de personas o grupos religiosos</li>
+          <li>Intentar manipular el sistema para obtener respuestas contrarias a la doctrina católica presentándolas como si fueran oficiales</li>
+          <li>Usar la herramienta para fines comerciales sin autorización expresa del responsable</li>
+          <li>Reproducir respuestas de Theos atribuyéndolas a fuentes eclesiásticas oficiales</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 5 -->
+    <div class="doc-section">
+      <div class="doc-section-header">
+        <span class="sec-num">5</span>
+        <h3>Proveedores de IA y condiciones de terceros</h3>
+      </div>
+      <div class="doc-section-body">
+        <p>
+          Theos actúa como intermediario técnico entre el usuario y los proveedores de
+          inteligencia artificial. El uso de cada proveedor está sujeto a sus propios
+          términos de servicio:
+        </p>
+        <ul>
+          <li><a href="https://openai.com/policies/terms-of-use" target="_blank" rel="noopener">Términos de uso de OpenAI</a></li>
+          <li><a href="https://www.anthropic.com/legal/consumer-terms" target="_blank" rel="noopener">Términos de uso de Anthropic</a></li>
+          <li><a href="https://policies.google.com/terms" target="_blank" rel="noopener">Términos de servicio de Google</a></li>
+        </ul>
+        <p>
+          Alejandro Viveros Domínguez no se responsabiliza por las políticas, cambios
+          de servicio o interrupciones de dichos proveedores.
+        </p>
+      </div>
+    </div>
+
+    <!-- 6 -->
+    <div class="doc-section">
+      <div class="doc-section-header">
+        <span class="sec-num">6</span>
+        <h3>Limitación de responsabilidad</h3>
+      </div>
+      <div class="doc-section-body">
+        <p>
+          En la máxima medida permitida por la ley aplicable, Alejandro Viveros Domínguez
+          no será responsable por:
+        </p>
+        <ul>
+          <li>Decisiones personales de fe, conciencia o conducta tomadas con base en las respuestas de Theos</li>
+          <li>Errores teológicos producidos por los modelos de inteligencia artificial</li>
+          <li>Daños directos, indirectos o consecuentes derivados del uso o la imposibilidad de uso del servicio</li>
+          <li>La disponibilidad, velocidad o continuidad del servicio, que puede interrumpirse sin previo aviso</li>
+        </ul>
+        <p>
+          Theos se ofrece <em>tal cual</em> (<em>as is</em>), sin garantías de ningún tipo,
+          expresas o implícitas, sobre la exactitud teológica de sus respuestas.
+        </p>
+      </div>
+    </div>
+
+    <!-- 7 -->
+    <div class="doc-section">
+      <div class="doc-section-header">
+        <span class="sec-num">7</span>
+        <h3>Propiedad intelectual</h3>
+      </div>
+      <div class="doc-section-body">
+        <p>
+          El diseño, código fuente y textos originales de Theos son propiedad de
+          Alejandro Viveros Domínguez, salvo que se indique lo contrario.
+          Las fuentes teológicas citadas (Sagrada Escritura, documentos del Magisterio,
+          escritos de Padres de la Iglesia) son de dominio público o pertenecen a sus
+          respectivos titulares.
+        </p>
+        <p>
+          Las respuestas generadas por los modelos de IA no constituyen obra original
+          del responsable del sitio y no deben reproducirse como si representaran
+          una posición teológica autoral propia.
+        </p>
+      </div>
+    </div>
+
+    <!-- 8 -->
+    <div class="doc-section">
+      <div class="doc-section-header">
+        <span class="sec-num">8</span>
+        <h3>Modificaciones y vigencia</h3>
+      </div>
+      <div class="doc-section-body">
+        <p>
+          Estos Términos y Condiciones pueden modificarse en cualquier momento.
+          La versión vigente es siempre la publicada en esta página, con la fecha
+          de última actualización indicada al inicio. El uso continuado de Theos
+          tras la publicación de cambios implica la aceptación de los nuevos términos.
+        </p>
+        <p>
+          Para consultas sobre estos términos, escribe a
+          <a href="mailto:contacto@viveros.click">contacto@viveros.click</a>.
+        </p>
+      </div>
+    </div>
+
+    <div class="doc-footer">
+      <p>
+        ¿Dudas? <a href="mailto:contacto@viveros.click">contacto@viveros.click</a><br>
+        <a href="/aviso-privacidad">Aviso de Privacidad</a> ·
+        <a href="/marco-referencia">Marco de Referencia</a> ·
+        <a href="/">Volver al chat</a>
+      </p>
+    </div>
+
+  </main>
+
+</body>
+</html>

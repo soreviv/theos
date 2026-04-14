@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Marco de Referencia — Theos</title>
+  <meta name="description" content="Fuentes oficiales en las que se fundamentan las respuestas de Theos: Biblia, Vaticano II, Padres de la Iglesia, Catecismo y más." />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://viveros.click/marco-referencia" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* ── Page layout ───────────────────────────────────────── */
+    body {
+      overflow: auto;
+      height: auto;
+      min-height: 100dvh;
+    }
+
+    .ref-header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      height: var(--header-h);
+      background: var(--color-surface);
+      border-bottom: 1px solid var(--color-border);
+      box-shadow: var(--shadow-sm);
+    }
+    .ref-header-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding: 0 16px;
+      height: 100%;
+    }
+    .ref-header-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .ref-header-title .header-icon { font-size: 18px; color: var(--color-accent); }
+    .ref-header-title h1 {
+      font-family: var(--font-serif);
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--color-accent);
+    }
+    .ref-header-title span.header-subtitle {
+      font-size: .75rem;
+      color: var(--color-text-muted);
+      border-left: 1px solid var(--color-border);
+      padding-left: 8px;
+      margin-left: 2px;
+    }
+    .back-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border: 1.5px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      background: transparent;
+      font-family: var(--font-sans);
+      font-size: .82rem;
+      color: var(--color-text-muted);
+      cursor: pointer;
+      text-decoration: none;
+      transition: border-color var(--transition), color var(--transition), background var(--transition);
+    }
+    .back-btn:hover {
+      border-color: var(--color-accent);
+      color: var(--color-accent);
+      background: var(--color-accent-light);
+    }
+
+    /* ── Main content ──────────────────────────────────────── */
+    .ref-main {
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding: 40px 16px 64px;
+    }
+
+    .ref-intro {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+    .ref-intro .ref-icon {
+      font-size: 2.4rem;
+      color: var(--color-accent);
+      display: block;
+      margin-bottom: 12px;
+      opacity: .85;
+    }
+    .ref-intro h2 {
+      font-family: var(--font-serif);
+      font-size: 1.65rem;
+      color: var(--color-text);
+      margin-bottom: 10px;
+    }
+    .ref-intro p {
+      font-size: .95rem;
+      color: var(--color-text-muted);
+      line-height: 1.65;
+      max-width: 560px;
+      margin: 0 auto;
+    }
+
+    /* ── Source cards ──────────────────────────────────────── */
+    .ref-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .ref-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      transition: box-shadow var(--transition);
+    }
+    .ref-card:hover { box-shadow: var(--shadow-md); }
+
+    .ref-card-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 20px 24px 16px;
+      border-bottom: 1px solid var(--color-border);
+      background: var(--color-accent-light);
+    }
+    .ref-card-icon {
+      font-size: 1.8rem;
+      flex-shrink: 0;
+      line-height: 1;
+    }
+    .ref-card-header-text h3 {
+      font-family: var(--font-serif);
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--color-accent);
+      margin-bottom: 2px;
+    }
+    .ref-card-header-text .ref-category {
+      font-size: .75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--color-text-muted);
+    }
+
+    .ref-card-body {
+      padding: 20px 24px;
+    }
+    .ref-card-body p {
+      font-size: .92rem;
+      color: var(--color-text);
+      line-height: 1.65;
+      margin-bottom: 16px;
+    }
+    .ref-card-body p:last-child { margin-bottom: 0; }
+
+    /* Works list */
+    .works-label {
+      font-size: .75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: var(--color-text-muted);
+      margin-bottom: 8px;
+    }
+    .works-list {
+      list-style: none;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+    .works-list li {
+      font-family: var(--font-serif);
+      font-size: .85rem;
+      color: var(--color-accent);
+      background: var(--color-accent-light);
+      border: 1px solid rgba(107,63,42,.15);
+      border-radius: 20px;
+      padding: 3px 12px;
+    }
+
+    /* Documents sub-list (Vatican II) */
+    .docs-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .docs-list li {
+      display: flex;
+      gap: 10px;
+      font-size: .9rem;
+      line-height: 1.5;
+    }
+    .docs-list .doc-abbr {
+      font-family: var(--font-serif);
+      font-weight: 700;
+      color: var(--color-accent);
+      white-space: nowrap;
+      min-width: 60px;
+    }
+    .docs-list .doc-desc {
+      color: var(--color-text-muted);
+    }
+
+    /* Quote pull */
+    .ref-quote {
+      border-left: 3px solid var(--color-accent);
+      margin: 16px 0 0;
+      padding: 8px 14px;
+      font-family: var(--font-serif);
+      font-style: italic;
+      font-size: .9rem;
+      color: var(--color-text-muted);
+      line-height: 1.6;
+    }
+    .ref-quote cite {
+      display: block;
+      margin-top: 4px;
+      font-style: normal;
+      font-size: .78rem;
+      color: var(--color-accent);
+      font-family: var(--font-sans);
+    }
+
+    /* ── Disclaimer ────────────────────────────────────────── */
+    .ref-disclaimer {
+      margin-top: 48px;
+      padding: 18px 22px;
+      background: #fff8e1;
+      border: 1px solid #f0d060;
+      border-radius: var(--radius-sm);
+      font-size: .85rem;
+      color: #6b5200;
+      line-height: 1.6;
+      text-align: center;
+    }
+    .ref-disclaimer strong { color: #5a4400; }
+
+    /* ── Responsive ────────────────────────────────────────── */
+    @media (max-width: 600px) {
+      .ref-header-title span.header-subtitle { display: none; }
+      .ref-intro h2 { font-size: 1.35rem; }
+      .ref-card-body { padding: 16px 18px; }
+      .ref-card-header { padding: 16px 18px 14px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="ref-header">
+    <div class="ref-header-inner">
+      <div class="ref-header-title">
+        <span class="header-icon" aria-hidden="true">✝</span>
+        <h1>Theos</h1>
+        <span class="header-subtitle">Marco de Referencia</span>
+      </div>
+      <a href="/" class="back-btn" aria-label="Volver al chat">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+        Volver al chat
+      </a>
+    </div>
+  </header>
+
+  <!-- Main -->
+  <main class="ref-main">
+
+    <div class="ref-intro">
+      <span class="ref-icon" aria-hidden="true">📚</span>
+      <h2>Fuentes de autoridad</h2>
+      <p>
+        Theos fundamenta cada respuesta en literatura oficial de la Iglesia Católica.
+        No genera doctrina propia — sintetiza, cita y acompaña desde estas fuentes verificables.
+      </p>
+    </div>
+
+    <div class="ref-grid">
+
+      <!-- 1. Biblia -->
+      <article class="ref-card">
+        <div class="ref-card-header">
+          <span class="ref-card-icon" aria-hidden="true">📖</span>
+          <div class="ref-card-header-text">
+            <h3>Sagrada Escritura</h3>
+            <span class="ref-category">Palabra de Dios — fuente primaria</span>
+          </div>
+        </div>
+        <div class="ref-card-body">
+          <p>
+            La Biblia católica comprende <strong>73 libros</strong> (46 del Antiguo Testamento y 27 del Nuevo),
+            incluidos los libros deuterocanónicos reconocidos en el Concilio de Trento (1546).
+            Theos trabaja principalmente con la <em>Biblia de Jerusalén</em> y la <em>Nueva Biblia de la Gracia</em>,
+            con referencia a la Vulgata Latina de San Jerónimo para textos en su idioma original.
+          </p>
+          <p>
+            La exégesis sigue los criterios de la Constitución dogmática <em>Dei Verbum</em> (Vaticano II):
+            sentido literal, analógico y moral; contexto histórico-literario; unidad de toda la Escritura;
+            y la Tradición viva de la Iglesia como criterio hermenéutico.
+          </p>
+          <div class="ref-quote">
+            "La Sagrada Escritura es la palabra de Dios, en cuanto escrita por inspiración del Espíritu Santo."
+            <cite>— Dei Verbum §9, Concilio Vaticano II</cite>
+          </div>
+        </div>
+      </article>
+
+      <!-- 2. Catecismo -->
+      <article class="ref-card">
+        <div class="ref-card-header">
+          <span class="ref-card-icon" aria-hidden="true">🏛️</span>
+          <div class="ref-card-header-text">
+            <h3>Catecismo de la Iglesia Católica</h3>
+            <span class="ref-category">Magisterio ordinario — referencia doctrinal principal</span>
+          </div>
+        </div>
+        <div class="ref-card-body">
+          <p>
+            Promulgado por Juan Pablo II en 1992 y revisado en 1997, el <strong>CIC</strong> es la síntesis
+            más completa y autorizada de la doctrina católica en la época contemporánea.
+            Estructura la fe en cuatro pilares: el Credo (§26–1065), los Sacramentos (§1066–1690),
+            la Vida moral (§1691–2557) y la Oración (§2558–2865).
+          </p>
+          <p>
+            Theos cita el Catecismo por número de parágrafo (ej. <em>CIC §1700</em>) para que el lector
+            pueda verificar cada afirmación directamente en la fuente oficial.
+          </p>
+          <div class="ref-quote">
+            "El Catecismo de la Iglesia Católica es un enunciado de la fe de la Iglesia
+            y de la doctrina católica, atestiguadas o iluminadas por la Sagrada Escritura,
+            la Tradición apostólica y el Magisterio eclesiástico."
+            <cite>— Fidei Depositum, Juan Pablo II (1992)</cite>
+          </div>
+        </div>
+      </article>
+
+      <!-- 3. Vaticano II -->
+      <article class="ref-card">
+        <div class="ref-card-header">
+          <span class="ref-card-icon" aria-hidden="true">⛪</span>
+          <div class="ref-card-header-text">
+            <h3>Concilio Vaticano II</h3>
+            <span class="ref-category">Magisterio solemne — 1962–1965</span>
+          </div>
+        </div>
+        <div class="ref-card-body">
+          <p>
+            El Vaticano II produjo 16 documentos que constituyen la expresión más reciente
+            del Magisterio solemne de la Iglesia. Theos los cita con su abreviatura oficial.
+          </p>
+          <ul class="docs-list">
+            <li>
+              <span class="doc-abbr">LG</span>
+              <span class="doc-desc"><em>Lumen Gentium</em> — naturaleza y misión de la Iglesia; salvación fuera de la Iglesia visible (§16)</span>
+            </li>
+            <li>
+              <span class="doc-abbr">GS</span>
+              <span class="doc-desc"><em>Gaudium et Spes</em> — la Iglesia en el mundo contemporáneo; dignidad humana, familia, cultura</span>
+            </li>
+            <li>
+              <span class="doc-abbr">DV</span>
+              <span class="doc-desc"><em>Dei Verbum</em> — Revelación divina, Escritura y Tradición, criterios de exégesis</span>
+            </li>
+            <li>
+              <span class="doc-abbr">SC</span>
+              <span class="doc-desc"><em>Sacrosanctum Concilium</em> — reforma litúrgica y participación de los fieles</span>
+            </li>
+            <li>
+              <span class="doc-abbr">NA</span>
+              <span class="doc-desc"><em>Nostra Aetate</em> — relaciones con judaísmo, islam, hinduismo, budismo y otras religiones</span>
+            </li>
+            <li>
+              <span class="doc-abbr">UR</span>
+              <span class="doc-desc"><em>Unitatis Redintegratio</em> — ecumenismo y diálogo con las Iglesias separadas</span>
+            </li>
+            <li>
+              <span class="doc-abbr">DH</span>
+              <span class="doc-desc"><em>Dignitatis Humanae</em> — libertad religiosa como derecho civil y natural</span>
+            </li>
+          </ul>
+        </div>
+      </article>
+
+      <!-- 4. San Agustín -->
+      <article class="ref-card">
+        <div class="ref-card-header">
+          <span class="ref-card-icon" aria-hidden="true">✍️</span>
+          <div class="ref-card-header-text">
+            <h3>San Agustín de Hipona</h3>
+            <span class="ref-category">Doctor de la Iglesia · 354–430 d.C.</span>
+          </div>
+        </div>
+        <div class="ref-card-body">
+          <p>
+            Obispo de Hipona (norte de África) y uno de los teólogos más influyentes de la historia cristiana.
+            Su pensamiento sobre la gracia, el pecado original, la Trinidad y la Ciudad de Dios
+            sigue siendo referencia fundamental del Magisterio católico.
+          </p>
+          <div class="works-label">Obras principales citadas</div>
+          <ul class="works-list">
+            <li>Confesiones</li>
+            <li>La Ciudad de Dios</li>
+            <li>De Trinitate</li>
+            <li>De Doctrina Christiana</li>
+            <li>Enchiridion</li>
+            <li>Contra Faustum</li>
+            <li>De libero arbitrio</li>
+          </ul>
+          <div class="ref-quote">
+            "Nos hiciste para Ti, Señor, y nuestro corazón está inquieto hasta que descanse en Ti."
+            <cite>— Confesiones I, 1</cite>
+          </div>
+        </div>
+      </article>
+
+      <!-- 5. San Ambrosio -->
+      <article class="ref-card">
+        <div class="ref-card-header">
+          <span class="ref-card-icon" aria-hidden="true">✍️</span>
+          <div class="ref-card-header-text">
+            <h3>San Ambrosio de Milán</h3>
+            <span class="ref-category">Doctor de la Iglesia · c. 340–397 d.C.</span>
+          </div>
+        </div>
+        <div class="ref-card-body">
+          <p>
+            Obispo de Milán y mentor de San Agustín. Fue pionero en la independencia de la Iglesia
+            frente al poder imperial y desarrolló una teología sacramental y mariana de gran profundidad.
+            Sus escritos sobre los sacramentos siguen siendo referencia litúrgica de primer orden.
+          </p>
+          <div class="works-label">Obras principales citadas</div>
+          <ul class="works-list">
+            <li>De Sacramentis</li>
+            <li>De Mysteriis</li>
+            <li>De Officiis Ministrorum</li>
+            <li>De Spiritu Sancto</li>
+            <li>De Virginibus</li>
+            <li>Explanatio Psalmorum</li>
+          </ul>
+          <div class="ref-quote">
+            "Donde está Pedro, allí está la Iglesia; y donde está la Iglesia, allí no hay muerte, sino vida eterna."
+            <cite>— Enarratio in Psalmum 40, San Ambrosio</cite>
+          </div>
+        </div>
+      </article>
+
+      <!-- 6. San Jerónimo -->
+      <article class="ref-card">
+        <div class="ref-card-header">
+          <span class="ref-card-icon" aria-hidden="true">✍️</span>
+          <div class="ref-card-header-text">
+            <h3>San Jerónimo de Estridón</h3>
+            <span class="ref-category">Doctor de la Iglesia · c. 342–420 d.C.</span>
+          </div>
+        </div>
+        <div class="ref-card-body">
+          <p>
+            Traductor de la <strong>Vulgata Latina</strong>, la versión oficial de la Biblia para la Iglesia durante
+            más de mil años. Dominó el hebreo, griego, latín y arameo, y su trabajo filológico es
+            referencia para la exégesis católica. Su correspondencia con Agustín documenta los debates
+            teológicos más importantes del siglo IV–V.
+          </p>
+          <div class="works-label">Obras principales citadas</div>
+          <ul class="works-list">
+            <li>Vulgata Latina</li>
+            <li>Comentarios a los Evangelios</li>
+            <li>De Viris Illustribus</li>
+            <li>Epístolas (a Paula, Eustoquia, Agustín)</li>
+            <li>Contra Pelagianos</li>
+            <li>Adversus Helvidium</li>
+          </ul>
+          <div class="ref-quote">
+            "La ignorancia de las Escrituras es ignorancia de Cristo."
+            <cite>— Comentario a Isaías, Prólogo · San Jerónimo</cite>
+          </div>
+        </div>
+      </article>
+
+      <!-- 7. San Gregorio Magno -->
+      <article class="ref-card">
+        <div class="ref-card-header">
+          <span class="ref-card-icon" aria-hidden="true">✍️</span>
+          <div class="ref-card-header-text">
+            <h3>San Gregorio Magno</h3>
+            <span class="ref-category">Doctor de la Iglesia · Papa · c. 540–604 d.C.</span>
+          </div>
+        </div>
+        <div class="ref-card-body">
+          <p>
+            Primer monje en convertirse en Papa (590–604). Reorganizó la liturgia romana,
+            impulsó la evangelización de Inglaterra y sentó las bases de la teología pastoral.
+            Su <em>Regla Pastoral</em> fue manual de gobierno eclesiástico durante siglos.
+            Su espiritualidad contemplativa influyó directamente en el monasticismo medieval.
+          </p>
+          <div class="works-label">Obras principales citadas</div>
+          <ul class="works-list">
+            <li>Moralia in Job</li>
+            <li>Regla Pastoral</li>
+            <li>Diálogos</li>
+            <li>Homilías sobre los Evangelios</li>
+            <li>Homilías sobre Ezequiel</li>
+            <li>Epístolas</li>
+          </ul>
+          <div class="ref-quote">
+            "El que gobierna debe ser puro en su pensamiento, recto en su acción,
+            discreto en su silencio y útil en su palabra."
+            <cite>— Regla Pastoral II, 1 · San Gregorio Magno</cite>
+          </div>
+        </div>
+      </article>
+
+      <!-- 8. Historia de un Alma -->
+      <article class="ref-card">
+        <div class="ref-card-header">
+          <span class="ref-card-icon" aria-hidden="true">🌹</span>
+          <div class="ref-card-header-text">
+            <h3>Historia de un Alma</h3>
+            <span class="ref-category">Santa Teresa de Lisieux · Doctor de la Iglesia · 1873–1897</span>
+          </div>
+        </div>
+        <div class="ref-card-body">
+          <p>
+            Autobiografía espiritual de Santa Teresa del Niño Jesús, escrita entre 1895 y 1897
+            por obediencia a su priora. Publicada póstumamente ese mismo año.
+            Teresa, carmelita descalza de Lisieux (Francia), murió a los 24 años de tuberculosis.
+          </p>
+          <p>
+            Juan Pablo II la proclamó <strong>Doctora de la Iglesia</strong> en 1997 — una de las 37 en la historia,
+            y una de las cuatro mujeres. Su aportación central es la <em>pequeña vía</em>:
+            el camino de infancia espiritual, la confianza radical en la misericordia de Dios
+            y el amor como único motor de la vida cristiana, accesible a todos sin excepción.
+          </p>
+          <div class="works-label">Textos citados</div>
+          <ul class="works-list">
+            <li>Historia de un Alma (Manuscritos A, B, C)</li>
+            <li>Poesías completas</li>
+            <li>Últimas conversaciones</li>
+            <li>Cartas</li>
+          </ul>
+          <div class="ref-quote">
+            "Mi vocación es el amor. En el corazón de la Iglesia, mi madre, yo seré el amor.
+            Así seré todo, y así mi sueño se realizará."
+            <cite>— Manuscrito B, Historia de un Alma · Santa Teresa de Lisieux</cite>
+          </div>
+        </div>
+      </article>
+
+    </div><!-- /.ref-grid -->
+
+    <!-- Disclaimer -->
+    <div class="ref-disclaimer" role="note">
+      <strong>Nota importante:</strong> Theos es una herramienta educativa impulsada por inteligencia artificial.
+      Sus respuestas no constituyen magisterio oficial de la Iglesia Católica ni sustituyen
+      la dirección de un sacerdote, teólogo acreditado o director espiritual.
+      Ante dudas de conciencia, consulta siempre a tu párroco o confesor.
+    </div>
+
+  </main>
+
+</body>
+</html>

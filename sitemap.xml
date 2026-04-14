@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+
+  <url>
+    <loc>https://viveros.click/</loc>
+    <lastmod>2026-04-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>1.0</priority>
+    <xhtml:link rel="alternate" hreflang="es" href="https://viveros.click/"/>
+  </url>
+
+  <url>
+    <loc>https://viveros.click/marco-referencia</loc>
+    <lastmod>2026-04-13</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="es" href="https://viveros.click/marco-referencia"/>
+  </url>
+
+  <url>
+    <loc>https://viveros.click/aviso-privacidad</loc>
+    <lastmod>2026-04-13</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.4</priority>
+    <xhtml:link rel="alternate" hreflang="es" href="https://viveros.click/aviso-privacidad"/>
+  </url>
+
+  <url>
+    <loc>https://viveros.click/terminos-condiciones</loc>
+    <lastmod>2026-04-13</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.4</priority>
+    <xhtml:link rel="alternate" hreflang="es" href="https://viveros.click/terminos-condiciones"/>
+  </url>
+
+</urlset>
