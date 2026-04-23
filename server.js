@@ -23,6 +23,12 @@ const KEYS = {
   gemini:    process.env.GEMINI_API_KEY    || '',
 };
 
+const GEMINI_ALLOWED_MODELS = new Set([
+  'gemini-1.5-pro',
+  'gemini-1.5-flash',
+  'gemini-1.0-pro',
+]);
+
 const availableProviders = Object.entries(KEYS)
   .filter(([, v]) => v)
   .map(([k]) => k);
@@ -83,6 +89,11 @@ app.post('/api/chat', async (req, res) => {
       });
 
     } else if (provider === 'gemini') {
+      if (typeof model !== 'string' || !GEMINI_ALLOWED_MODELS.has(model)) {
+        return res.status(400).json({ error: { message: 'Modelo de Gemini no permitido.' } });
+      }
+      const geminiModel = model;
+
       const systemMsg = messages.find(m => m.role === 'system');
       const contents  = messages
         .filter(m => m.role !== 'system')
@@ -100,7 +111,7 @@ app.post('/api/chat', async (req, res) => {
       }
 
       upstream = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?key=${key}&alt=sse`,
+        `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(geminiModel)}:streamGenerateContent?key=${key}&alt=sse`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
