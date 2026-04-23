@@ -590,13 +590,11 @@ function attachEvents() {
     renderWelcome();
   });
 
-  // Persist API key to sessionStorage (tab-scoped — safer than localStorage)
+  // Do not persist API keys in browser storage; keep only in-memory input state.
   DOM.apiKeyInput.addEventListener('input', () => {
     const val = DOM.apiKeyInput.value.trim();
-    if (val) {
-      try { sessionStorage.setItem('theos_key', val); } catch { /* ignore */ }
-    } else {
-      try { sessionStorage.removeItem('theos_key'); } catch { /* ignore */ }
+    if (!val) {
+      // No persisted key to clear.
     }
     // Refresh welcome hint
     if (DOM.messages.querySelector('.welcome')) renderWelcome();
