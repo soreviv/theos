@@ -11,6 +11,7 @@ import { createServer } from 'http';
 import { fileURLToPath } from 'url';
 import path from 'path';
 import dotenv from 'dotenv';
+import rateLimit from 'express-rate-limit';
 
 dotenv.config();
 
@@ -41,6 +42,13 @@ if (availableProviders.length === 0) {
 const app = express();
 app.use(express.static(__dirname));
 app.use(express.json({ limit: '1mb' }));
+
+const spaLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100,                 // limit each IP to 100 requests per window
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 // ─── Health check ─────────────────────────────────────────────
 app.get('/api/health', (_req, res) => {
@@ -148,7 +156,7 @@ app.post('/api/chat', async (req, res) => {
 });
 
 // ─── Catch-all: return index.html (SPA) ──────────────────────
-app.get('*', (_req, res) => {
+app.get('*', spaLimiter, (_req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
