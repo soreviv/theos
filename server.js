@@ -40,7 +40,8 @@ if (availableProviders.length === 0) {
 }
 
 const app = express();
-app.use(express.static(__dirname));
+const publicDir = path.join(__dirname, 'public');
+app.use(express.static(publicDir, { dotfiles: 'deny' }));
 app.use(express.json({ limit: '1mb' }));
 
 const spaLimiter = rateLimit({
@@ -157,7 +158,7 @@ app.post('/api/chat', async (req, res) => {
 
 // ─── Catch-all: return index.html (SPA) ──────────────────────
 app.get('*', spaLimiter, (_req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+  res.sendFile(path.join(publicDir, 'index.html'));
 });
 
 createServer(app).listen(PORT, () => {
