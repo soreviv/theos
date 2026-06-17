@@ -618,8 +618,8 @@ async function init() {
     if (saved) DOM.apiKeyInput.value = saved;
   } catch { /* ignore */ }
 
-  // Bootstrap provider/model selectors with default provider (openai)
-  const defaultProvider = DOM.providerSelect.value || 'openai';
+  // Bootstrap provider/model selectors with default provider (gemini)
+  const defaultProvider = DOM.providerSelect.value || 'gemini';
   updateModelOptions(defaultProvider);
   updateApiKeyField(defaultProvider);
 

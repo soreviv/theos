@@ -58,7 +58,7 @@ app.get('/api/health', (_req, res) => {
 
 // ─── Chat proxy ───────────────────────────────────────────────
 app.post('/api/chat', async (req, res) => {
-  const { provider = 'openai', model, messages, max_tokens = 2048 } = req.body;
+  const { provider = 'gemini', model, messages, max_tokens = 2048 } = req.body;
 
   const key = KEYS[provider];
   if (!key) {
