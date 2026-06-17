@@ -159,7 +159,6 @@ app.post('/api/chat', async (req, res) => {
 // ─── Catch-all: return index.html (SPA) ──────────────────────
 app.get('*', spaLimiter, (_req, res) => {
   res.sendFile(path.join(STATIC_DIR, 'index.html'));
-})
 });
 
 createServer(app).listen(PORT, () => {
