@@ -16,6 +16,7 @@ import rateLimit from 'express-rate-limit';
 dotenv.config();
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const STATIC_DIR = path.join(__dirname, 'public');
 const PORT = process.env.PORT || 3000;
 
 const KEYS = {
@@ -40,7 +41,7 @@ if (availableProviders.length === 0) {
 }
 
 const app = express();
-app.use(express.static(__dirname));
+app.use(express.static(STATIC_DIR));
 app.use(express.json({ limit: '1mb' }));
 
 const spaLimiter = rateLimit({
@@ -157,7 +158,8 @@ app.post('/api/chat', async (req, res) => {
 
 // ─── Catch-all: return index.html (SPA) ──────────────────────
 app.get('*', spaLimiter, (_req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+  res.sendFile(path.join(STATIC_DIR, 'index.html'));
+})
 });
 
 createServer(app).listen(PORT, () => {
