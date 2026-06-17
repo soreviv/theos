@@ -41,7 +41,7 @@ if (availableProviders.length === 0) {
 }
 
 const app = express();
-app.use(express.static(STATIC_DIR));
+app.use(express.static(STATIC_DIR, { dotfiles: 'deny' }));
 app.use(express.json({ limit: '1mb' }));
 
 const spaLimiter = rateLimit({
