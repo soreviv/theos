@@ -200,6 +200,16 @@ const PROVIDERS = {
       { value: 'gemini-2.5-flash',              label: 'gemini-2.5-flash' },
     ],
   },
+  mistral: {
+    label:       'Mistral AI',
+    keyLabel:    'API Key de Mistral',
+    keyHint:     'Clave de Mistral API',
+    models: [
+      { value: 'mistral-large-latest', label: 'mistral-large (recomendado)' },
+      { value: 'mistral-small-latest', label: 'mistral-small (rápido)' },
+      { value: 'open-mixtral-8x22b',   label: 'open-mixtral-8x22b' },
+    ],
+  },
 };
 
 // ──────────────────────────────────────────────────────────────
@@ -252,6 +262,14 @@ async function callAPI(bubbleEl) {
   }
 
   if (!apiKey) throw new Error('Por favor introduce tu API key en Configuración.');
+
+  // Validate API key characters (protect against masked bullet points or unicode paste issues)
+  for (let i = 0; i < apiKey.length; i++) {
+    if (apiKey.charCodeAt(i) > 127) {
+      throw new Error('La API Key ingresada contiene caracteres no válidos (como puntos de máscara "•" o caracteres no ASCII). Por favor, asegúrate de copiar la clave real completa y no la versión oculta.');
+    }
+  }
+
   return callDirect(bubbleEl, provider, model, apiKey, messages);
 }
 
@@ -303,6 +321,10 @@ async function callDirect(bubbleEl, provider, model, apiKey, messages) {
     headers  = { 'Content-Type': 'application/json' };
     body = { contents, generationConfig: { maxOutputTokens: 2048 } };
     if (system) body.systemInstruction = { parts: [{ text: system.content }] };
+  } else if (provider === 'mistral') {
+    endpoint = 'https://api.mistral.ai/v1/chat/completions';
+    headers  = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` };
+    body = { model, max_tokens: 2048, messages, stream: true };
   }
 
   const res = await fetch(endpoint, { method: 'POST', headers, body: JSON.stringify(body) });
@@ -348,7 +370,7 @@ async function readStream(body, bubbleEl, provider) {
         if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta') {
           delta = event.delta.text;
         }
-      } else if (provider === 'openai') {
+      } else if (provider === 'openai' || provider === 'mistral') {
         delta = event.choices?.[0]?.delta?.content ?? null;
       } else if (provider === 'gemini') {
         delta = event.candidates?.[0]?.content?.parts?.[0]?.text ?? null;
