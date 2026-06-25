@@ -10,15 +10,18 @@ Este proyecto puede ejecutarse en dos modos con distintas implicaciones de segur
 - Se persiste en **`sessionStorage`** — solo vive en esa pestaña y se borra automáticamente al cerrarla.
 - Se envía directamente a `https://api.anthropic.com` como cabecera `x-api-key`.
 - **Es visible en las DevTools del navegador** (pestaña Network → cabeceras de la petición).
-- Aceptable para uso personal en tu propio equipo. No recomendado si compartes la URL con otras personas.
+- Aceptable para desarrollo o uso personal en tu propio equipo. No recomendado si compartes la URL con otras personas.
+- Este modo solo queda disponible al abrir `index.html` directamente como archivo local. En despliegues web, el frontend requiere el proxy.
 
 ### Modo proxy (`server.js`)
 
 - La API key se configura en un archivo `.env` **en el servidor**, nunca en el navegador.
 - El `.env` está en `.gitignore` — nunca debe commitearse.
-- El navegador llama a `POST /api/chat` en tu propio servidor; el servidor llama a Anthropic.
+- El navegador llama a `POST /api/chat` en tu propio servidor; el servidor llama al proveedor de IA configurado.
 - **La key no aparece en ninguna cabecera visible desde el navegador.**
 - Es el modo recomendado para cualquier despliegue accesible por terceros.
+- El servidor ignora cualquier mensaje `system` enviado por el cliente e inyecta su propio prompt.
+- El servidor valida proveedor, modelo, roles, longitud de mensajes y aplica rate limiting basico en memoria.
 
 ---
 
@@ -39,7 +42,10 @@ Este proyecto puede ejecutarse en dos modos con distintas implicaciones de segur
 | XSS en respuestas del modelo | `DOMPurify.sanitize()` sobre todo HTML generado por `marked.parse()` |
 | Commit accidental de `.env` | `.gitignore` cubre `.env` desde el primer commit |
 | Inyección de prompt por el usuario | Responsabilidad del operador; el system prompt no es ejecutable |
-| Uso abusivo del proxy sin autenticación | El `server.js` incluido es mínimo; en despliegues públicos añade rate limiting (p.ej. `express-rate-limit`) y autenticación de sesión |
+| Uso abusivo del proxy sin autenticación | Rate limiting basico en memoria y limites configurables; para multiples instancias usa Redis o un limitador persistente |
+| Manipulacion del system prompt | El servidor descarta `system` del cliente e inyecta `system-prompt.js` |
+| Costos inesperados por payloads largos | Limites configurables de tokens, mensajes y caracteres por mensaje |
+| Reportes abusivos | `/api/reports` valida motivos, longitud de contenido y comparte rate limit con `/api/chat` |
 
 ---
 
@@ -47,7 +53,7 @@ Este proyecto puede ejecutarse en dos modos con distintas implicaciones de segur
 
 Si expones esta app a usuarios no confiables, considera añadir:
 
-1. **Rate limiting** — `npm install express-rate-limit` y aplícalo al endpoint `/api/chat`.
+1. **Rate limiting persistente** — sustituye el limitador en memoria por Redis, Upstash, Cloudflare o una capa equivalente si usas varias instancias.
 2. **Autenticación** — sesiones o tokens para que solo usuarios autorizados puedan llamar al proxy.
 3. **Content Security Policy** — cabecera HTTP que restrinja la carga de scripts a fuentes conocidas.
 4. **HTTPS** — obligatorio en producción; usa un proxy inverso (nginx, Caddy) o la terminación TLS de tu plataforma.

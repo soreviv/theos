@@ -219,7 +219,9 @@ const state = {
   conversationHistory: [],  // [{role:'user'|'assistant', content:'...'}]
   isLoading: false,
   useBackendProxy: false,   // set to true if /api/health responds
+  allowDirectMode: window.location.protocol === 'file:',
   availableProviders: [],   // populated from /api/health in proxy mode
+  reportTarget: null,
 };
 
 // ──────────────────────────────────────────────────────────────
@@ -241,6 +243,14 @@ const DOM = {
   clearBtn:        document.getElementById('clear-btn'),
   proxyStatus:     document.getElementById('proxy-status'),
   chatContainer:   document.getElementById('chat-container'),
+  reportOverlay:   document.getElementById('report-overlay'),
+  reportModal:     document.getElementById('report-modal'),
+  reportCloseBtn:  document.getElementById('report-close-btn'),
+  reportCancelBtn: document.getElementById('report-cancel-btn'),
+  reportSubmitBtn: document.getElementById('report-submit-btn'),
+  reportReason:    document.getElementById('report-reason'),
+  reportComment:   document.getElementById('report-comment'),
+  reportStatus:    document.getElementById('report-status'),
 };
 
 // ──────────────────────────────────────────────────────────────
@@ -252,13 +262,14 @@ async function callAPI(bubbleEl) {
   const provider = DOM.providerSelect.value;
   const model    = DOM.modelSelect.value;
   const apiKey   = DOM.apiKeyInput.value.trim();
-  const messages = [
-    { role: 'system', content: SYSTEM_PROMPT },
-    ...state.conversationHistory,
-  ];
+  const messages = [...state.conversationHistory];
 
   if (state.useBackendProxy) {
     return callProxy(bubbleEl, provider, model, messages);
+  }
+
+  if (!state.allowDirectMode) {
+    throw new Error('Theos necesita el servidor activo para proteger las API keys en este entorno.');
   }
 
   if (!apiKey) throw new Error('Por favor introduce tu API key en Configuración.');
@@ -270,7 +281,10 @@ async function callAPI(bubbleEl) {
     }
   }
 
-  return callDirect(bubbleEl, provider, model, apiKey, messages);
+  return callDirect(bubbleEl, provider, model, apiKey, [
+    { role: 'system', content: SYSTEM_PROMPT },
+    ...messages,
+  ]);
 }
 
 /** Calls the server proxy — the server handles routing and key management. */
@@ -278,7 +292,7 @@ async function callProxy(bubbleEl, provider, model, messages) {
   const res = await fetch('/api/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ provider, model, messages, max_tokens: 2048 }),
+    body: JSON.stringify({ provider, model, messages }),
   });
 
   if (!res.ok) {
@@ -428,6 +442,27 @@ function createAssistantBubble() {
   return bubble;
 }
 
+function appendReportAction(bubbleEl, content) {
+  const wrapper = bubbleEl.closest('.message');
+  if (!wrapper || wrapper.querySelector('.report-btn')) return;
+
+  const actions = document.createElement('div');
+  actions.className = 'message-actions';
+
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'report-btn';
+  button.textContent = 'Reportar';
+  button.addEventListener('click', () => openReportModal({
+    content,
+    provider: DOM.providerSelect.value,
+    model: DOM.modelSelect.value,
+  }));
+
+  actions.appendChild(button);
+  wrapper.appendChild(actions);
+}
+
 /** Shows a non-fatal error inline in the chat. */
 function showErrorBubble(message) {
   const wrapper = document.createElement('div');
@@ -443,6 +478,7 @@ function showErrorBubble(message) {
 /** Renders the welcome screen (shown on load and after clear). */
 function renderWelcome() {
   const hasKey = DOM.apiKeyInput.value.trim() || state.useBackendProxy;
+  const needsServer = !state.useBackendProxy && !state.allowDirectMode;
   DOM.messages.innerHTML = `
     <div class="welcome">
       <span class="welcome-icon" aria-hidden="true">✝</span>
@@ -450,7 +486,12 @@ function renderWelcome() {
       <p>Un teólogo católico formado, disponible para el diálogo sincero.<br>
          Puedes preguntar sobre doctrina, fe, otras tradiciones religiosas,
          dudas filosóficas o simplemente compartir lo que llevas en el corazón.</p>
-      ${hasKey ? '' : `
+      ${needsServer ? `
+      <div class="api-warning">
+        <span>⚙</span>
+        El servidor de Theos no está disponible. Intenta de nuevo en unos momentos.
+      </div>` : ''}
+      ${hasKey || needsServer ? '' : `
       <div class="api-warning">
         <span>⚙</span>
         Configura tu API key en
@@ -473,7 +514,12 @@ async function sendMessage() {
   if (!text || state.isLoading) return;
 
   // Validate API key (only needed in direct mode)
-  if (!state.useBackendProxy && !DOM.apiKeyInput.value.trim()) {
+  if (!state.useBackendProxy && !state.allowDirectMode) {
+    showErrorBubble('Theos necesita el servidor activo para proteger las API keys en este entorno.');
+    return;
+  }
+
+  if (!state.useBackendProxy && state.allowDirectMode && !DOM.apiKeyInput.value.trim()) {
     openSettings();
     DOM.apiKeyInput.focus();
     return;
@@ -499,6 +545,7 @@ async function sendMessage() {
   try {
     const fullText = await callAPI(bubbleEl);
     state.conversationHistory.push({ role: 'assistant', content: fullText });
+    appendReportAction(bubbleEl, fullText);
   } catch (err) {
     // Remove the empty assistant bubble if nothing was streamed
     if (!bubbleEl.textContent.trim()) {
@@ -572,6 +619,66 @@ function closeSettings() {
   DOM.settingsOverlay.classList.remove('visible');
 }
 
+function openReportModal(target) {
+  state.reportTarget = target;
+  DOM.reportStatus.textContent = '';
+  DOM.reportReason.value = 'doctrinal_error';
+  DOM.reportComment.value = '';
+  DOM.reportSubmitBtn.disabled = false;
+  DOM.reportModal.classList.add('open');
+  DOM.reportOverlay.classList.add('visible');
+  DOM.reportOverlay.setAttribute('aria-hidden', 'false');
+  DOM.reportReason.focus();
+}
+
+function closeReportModal() {
+  state.reportTarget = null;
+  DOM.reportModal.classList.remove('open');
+  DOM.reportOverlay.classList.remove('visible');
+  DOM.reportOverlay.setAttribute('aria-hidden', 'true');
+}
+
+async function submitReport() {
+  if (!state.reportTarget || DOM.reportSubmitBtn.disabled) return;
+
+  if (!state.useBackendProxy) {
+    DOM.reportStatus.textContent = 'Los reportes requieren el servidor activo.';
+    return;
+  }
+
+  DOM.reportSubmitBtn.disabled = true;
+  DOM.reportStatus.textContent = 'Enviando reporte...';
+
+  try {
+    const res = await fetch('/api/reports', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        reason: DOM.reportReason.value,
+        comment: DOM.reportComment.value.trim(),
+        content: state.reportTarget.content,
+        provider: state.reportTarget.provider,
+        model: state.reportTarget.model,
+      }),
+    });
+
+    if (!res.ok) {
+      let message = `No se pudo enviar el reporte (${res.status}).`;
+      try {
+        const data = await res.json();
+        if (data?.error?.message) message = data.error.message;
+      } catch { /* ignore */ }
+      throw new Error(message);
+    }
+
+    DOM.reportStatus.textContent = 'Gracias. Revisaremos este reporte.';
+    setTimeout(closeReportModal, 900);
+  } catch (err) {
+    DOM.reportSubmitBtn.disabled = false;
+    DOM.reportStatus.textContent = err.message;
+  }
+}
+
 // ──────────────────────────────────────────────────────────────
 // 9. EVENT LISTENERS
 // ──────────────────────────────────────────────────────────────
@@ -595,10 +702,19 @@ function attachEvents() {
   DOM.settingsCloseBtn.addEventListener('click', closeSettings);
   DOM.settingsOverlay.addEventListener('click', closeSettings);
 
+  // Report modal
+  DOM.reportCloseBtn.addEventListener('click', closeReportModal);
+  DOM.reportCancelBtn.addEventListener('click', closeReportModal);
+  DOM.reportOverlay.addEventListener('click', closeReportModal);
+  DOM.reportSubmitBtn.addEventListener('click', submitReport);
+
   // Close settings with Escape
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && DOM.settingsPanel.classList.contains('open')) {
       closeSettings();
+    }
+    if (e.key === 'Escape' && DOM.reportModal.classList.contains('open')) {
+      closeReportModal();
     }
   });
 
@@ -654,6 +770,7 @@ async function init() {
       const data = await health.json();
       state.useBackendProxy      = true;
       state.availableProviders   = data.providers || [];
+      state.allowDirectMode      = false;
 
       // Restrict provider selector to what the server has keys for
       if (state.availableProviders.length > 0) {
@@ -668,10 +785,10 @@ async function init() {
       DOM.apiKeyInput.disabled    = true;
       DOM.apiKeyInput.placeholder = 'Gestionada por el servidor';
     } else {
-      setDirectMode();
+      setDirectMode(state.allowDirectMode);
     }
   } catch {
-    setDirectMode();
+    setDirectMode(state.allowDirectMode);
   }
 
   // Render welcome screen and focus input
@@ -680,10 +797,21 @@ async function init() {
   attachEvents();
 }
 
-function setDirectMode() {
+function setDirectMode(allowed) {
   state.useBackendProxy = false;
-  DOM.proxyStatus.textContent = 'Modo local — API key visible solo en tu navegador';
+  state.allowDirectMode = Boolean(allowed);
+
+  if (state.allowDirectMode) {
+    DOM.proxyStatus.textContent = 'Modo local — API key visible solo en tu navegador';
+    DOM.proxyStatus.className   = 'proxy-status direct';
+    return;
+  }
+
+  DOM.proxyStatus.textContent = 'Servidor no disponible — modo directo desactivado en producción';
   DOM.proxyStatus.className   = 'proxy-status direct';
+  DOM.apiKeyInput.disabled    = true;
+  DOM.apiKeyInput.placeholder = 'Requiere servidor';
+  DOM.sendBtn.disabled        = true;
 }
 
 // Expose openSettings globally for the welcome button's inline onclick

@@ -270,6 +270,27 @@ body {
 .message.user  + .message.assistant { margin-top: 12px; }
 .message.assistant + .message.user  { margin-top: 12px; }
 
+.message-actions {
+  display: flex;
+  margin-top: 6px;
+}
+
+.report-btn {
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: .72rem;
+  padding: 2px 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.report-btn:hover {
+  color: var(--color-accent);
+}
+
 /* ============================================================
    Typing Indicator
    ============================================================ */
@@ -448,6 +469,120 @@ body {
   z-index: 99;
 }
 #settings-overlay.visible { display: block; }
+
+#report-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.32);
+  z-index: 109;
+}
+#report-overlay.visible { display: block; }
+
+#report-modal {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: min(420px, calc(100% - 32px));
+  transform: translate(-50%, -50%);
+  z-index: 110;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  padding: 20px;
+}
+#report-modal.open {
+  display: block;
+}
+.report-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.report-header h2 {
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+  color: var(--color-text);
+}
+#report-close-btn {
+  width: 30px;
+  height: 30px;
+  border: none;
+  background: transparent;
+  font-size: 1.3rem;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+#report-close-btn:hover {
+  background: var(--color-accent-light);
+  color: var(--color-accent);
+}
+#report-modal label {
+  display: block;
+  font-size: .8rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  margin: 10px 0 6px;
+}
+#report-modal select,
+#report-modal textarea {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  font-family: var(--font-sans);
+  font-size: .9rem;
+  color: var(--color-text);
+  outline: none;
+}
+#report-modal select:focus,
+#report-modal textarea:focus {
+  border-color: var(--color-accent);
+}
+#report-modal textarea {
+  resize: vertical;
+  min-height: 92px;
+}
+.report-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 14px;
+}
+#report-submit-btn {
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--color-accent);
+  color: #fff;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: .88rem;
+  padding: 9px 16px;
+}
+#report-submit-btn:hover {
+  background: var(--color-accent-hover);
+}
+#report-submit-btn:disabled {
+  cursor: not-allowed;
+  opacity: .55;
+}
+#report-status {
+  min-height: 18px;
+  margin-top: 10px;
+  font-size: .78rem;
+  color: var(--color-text-muted);
+}
 
 #settings-panel {
   position: fixed;

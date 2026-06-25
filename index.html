@@ -64,6 +64,33 @@
   <!-- Settings overlay (click to close panel) -->
   <div id="settings-overlay" aria-hidden="true"></div>
 
+  <!-- Report modal -->
+  <div id="report-overlay" aria-hidden="true"></div>
+  <section id="report-modal" role="dialog" aria-modal="true" aria-labelledby="report-title">
+    <div class="report-header">
+      <h2 id="report-title">Reportar respuesta</h2>
+      <button id="report-close-btn" aria-label="Cerrar reporte">&times;</button>
+    </div>
+
+    <label for="report-reason">Motivo</label>
+    <select id="report-reason">
+      <option value="doctrinal_error">Error doctrinal grave</option>
+      <option value="offensive">Contenido ofensivo o discriminatorio</option>
+      <option value="unsafe_advice">Consejo peligroso</option>
+      <option value="false_citation">Cita falsa o no verificable</option>
+      <option value="other">Otro</option>
+    </select>
+
+    <label for="report-comment">Comentario opcional</label>
+    <textarea id="report-comment" rows="4" maxlength="800" placeholder="Añade contexto si ayuda a revisar el problema"></textarea>
+
+    <div class="report-actions">
+      <button id="report-cancel-btn" class="btn-secondary">Cancelar</button>
+      <button id="report-submit-btn">Enviar reporte</button>
+    </div>
+    <p id="report-status" role="status"></p>
+  </section>
+
   <!-- Settings panel (slide-in drawer) -->
   <aside id="settings-panel" role="complementary" aria-label="Configuración">
     <div class="settings-header">
