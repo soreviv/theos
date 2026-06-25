@@ -18,9 +18,37 @@ Este documento convierte las oportunidades detectadas en un plan de implementaci
 - Fuentes verificables: separar conocimiento doctrinal curado del prompt general.
 - Lanzamiento incremental: PWA primero, Trusted Web Activity despues, app nativa solo si hay necesidad clara.
 
+## Estado actual
+
+Ultima actualizacion: 2026-06-25.
+
+### Completado en `c50edf0`
+
+- Fase 1.1: modo directo desactivado en despliegues web; el modo con API key queda solo para `index.html` local.
+- Fase 1.2: rate limiting basico en memoria y limites configurables por variables de entorno.
+- Fase 1.3: validacion de proveedor/modelo/mensajes; `max_tokens` controlado por servidor; el cliente ya no puede reemplazar el system prompt.
+- Fase 2.1: UI minima de reporte por respuesta y endpoint `POST /api/reports`.
+- Fase 2.3: system prompt separado en `system-prompt.js` con limites pastorales y seguridad de crisis.
+- Fase 0.2 parcial: privacidad y terminos actualizados para incluir Mistral y reportes de respuestas.
+
+### Pendiente inmediato para respetar este plan
+
+1. Completar Fase 0.1: crear checklist formal de Play Console y decidir publico objetivo/edad.
+2. Completar Fase 0.2: revisar texto legal final contra Data Safety y politica publica.
+3. Completar Fase 1.4: cabeceras de seguridad y CSP.
+4. Completar Fase 1.5: observabilidad minima sin registrar conversaciones.
+5. Completar Fase 2.2: moderacion/filtros de alto riesgo.
+6. Continuar con Fase 3 solo despues de cerrar los puntos anteriores.
+
+### Notas de implementacion actual
+
+- El rate limit actual es en memoria. Sirve para una instancia inicial, pero debe reemplazarse por Redis, Upstash, Cloudflare o equivalente antes de escalar horizontalmente.
+- Los reportes se guardan en memoria y se registran con metadatos. Antes de beta cerrada deben persistirse o enrutar a una cola/herramienta de revision.
+- El prompt de servidor es una version compacta orientada a seguridad. El trabajo de fuentes verificables de Fase 4 sigue pendiente.
+
 ## Fase 0: Alineacion legal, politicas y alcance
 
-### 0.1 Revisar politica vigente de Google Play
+### 0.1 Revisar politica vigente de Google Play — Pendiente
 
 Implementacion:
 
@@ -45,7 +73,7 @@ Riesgos:
 - Inconsistencia entre Data Safety y aviso de privacidad.
 - Clasificacion de edad incorrecta por temas sensibles: sexualidad, violencia, suicidio, guerra, abuso o religion.
 
-### 0.2 Actualizar documentos legales
+### 0.2 Actualizar documentos legales — Parcial
 
 Implementacion:
 
@@ -67,9 +95,14 @@ Criterios de aceptacion:
 - El footer y Play Console apuntan a una URL publica estable de privacidad.
 - No hay promesas absolutas incompatibles con logs, reportes o proveedores externos.
 
+Estado:
+
+- Hecho: `aviso-privacidad.html` y `terminos-condiciones.html` ya mencionan Mistral y reportes.
+- Pendiente: revision legal final contra Data Safety y confirmacion de retencion/persistencia real de reportes.
+
 ## Fase 1: Seguridad, costos y operacion minima viable
 
-### 1.1 Retirar modo directo para produccion
+### 1.1 Retirar modo directo para produccion — Completado
 
 Implementacion:
 
@@ -84,7 +117,11 @@ Criterios de aceptacion:
 - El navegador solo llama a `/api/chat`.
 - Si el proxy no esta disponible, la app muestra un estado de servicio no disponible, no pide API key.
 
-### 1.2 Rate limiting y cuotas
+Estado:
+
+- Hecho: el frontend desactiva modo directo fuera de `file://`; el proxy controla proveedor/modelo y expone modelos permitidos en `/api/health`.
+
+### 1.2 Rate limiting y cuotas — Parcial
 
 Implementacion:
 
@@ -102,7 +139,12 @@ Criterios de aceptacion:
 - Requests largos o automatizados reciben `429` o `400`.
 - Los limites son configurables por variables de entorno.
 
-### 1.3 Validacion de entrada y control de historial
+Estado:
+
+- Hecho: rate limit basico en memoria, limites de tokens/mensajes/caracteres configurables y `max_tokens` controlado por servidor.
+- Pendiente: cuota diaria por usuario/sesion y limitador persistente para multiples instancias.
+
+### 1.3 Validacion de entrada y control de historial — Parcial
 
 Implementacion:
 
@@ -121,7 +163,12 @@ Criterios de aceptacion:
 - No hay errores internos por payloads malformados.
 - El costo por conversacion queda acotado.
 
-### 1.4 Cabeceras de seguridad
+Estado:
+
+- Hecho: validacion de proveedor/modelo/roles/contenido; se descartan mensajes `system` del cliente; se trunca el historial a los ultimos mensajes permitidos.
+- Pendiente: resumen inteligente de historial cuando la conversacion crece.
+
+### 1.4 Cabeceras de seguridad — Pendiente
 
 Implementacion:
 
@@ -142,7 +189,7 @@ Criterios de aceptacion:
 - No se rompe el render de Markdown.
 - La CSP bloquea scripts no autorizados.
 
-### 1.5 Observabilidad minima
+### 1.5 Observabilidad minima — Pendiente
 
 Implementacion:
 
@@ -168,7 +215,7 @@ Criterios de aceptacion:
 
 ## Fase 2: Cumplimiento especifico de IA generativa
 
-### 2.1 Reporte de contenido ofensivo dentro de la app
+### 2.1 Reporte de contenido ofensivo dentro de la app — Parcial
 
 Implementacion:
 
@@ -193,7 +240,12 @@ Criterios de aceptacion:
 - Los reportes se almacenan o enrutan para revision.
 - La politica de privacidad explica este flujo.
 
-### 2.2 Moderacion y filtros de seguridad
+Estado:
+
+- Hecho: boton "Reportar" por respuesta, modal con motivos, endpoint `/api/reports`, confirmacion visible y actualizacion de privacidad.
+- Pendiente: persistencia real o enrutamiento de reportes, id local de mensaje y proceso operativo de revision.
+
+### 2.2 Moderacion y filtros de seguridad — Pendiente
 
 Implementacion:
 
@@ -213,7 +265,7 @@ Criterios de aceptacion:
 - La app no genera instrucciones peligrosas.
 - Hay pruebas manuales con prompts de riesgo.
 
-### 2.3 Prompt pastoral de crisis
+### 2.3 Prompt pastoral de crisis — Parcial
 
 Implementacion:
 
@@ -229,9 +281,14 @@ Criterios de aceptacion:
 - Respuestas de temas sensibles son prudentes, no condenatorias y no absolutistas.
 - El asistente evita dar diagnosticos clinicos o instrucciones legales.
 
+Estado:
+
+- Hecho: `system-prompt.js` separado en servidor con instrucciones de limites, crisis y no sustitucion profesional.
+- Pendiente: pruebas manuales/evaluaciones de crisis y moderacion previa/posterior del contenido.
+
 ## Fase 3: Producto y experiencia de usuario
 
-### 3.1 Controles esperados de chat
+### 3.1 Controles esperados de chat — Pendiente
 
 Implementacion:
 
@@ -248,7 +305,7 @@ Criterios de aceptacion:
 - Errores recuperables no obligan a recargar la app.
 - Las acciones estan disponibles en movil sin saturar la interfaz.
 
-### 3.2 Onboarding claro
+### 3.2 Onboarding claro — Pendiente
 
 Implementacion:
 
@@ -264,7 +321,7 @@ Criterios de aceptacion:
 - El primer usuario entiende que es una herramienta educativa.
 - El onboarding no bloquea innecesariamente el flujo.
 
-### 3.3 Modos de conversacion
+### 3.3 Modos de conversacion — Pendiente
 
 Implementacion:
 
@@ -282,7 +339,7 @@ Criterios de aceptacion:
 - El usuario recibe respuestas ajustadas a su necesidad.
 - Los modos no contradicen las reglas doctrinales base.
 
-### 3.4 Accesibilidad y calidad movil
+### 3.4 Accesibilidad y calidad movil — Pendiente
 
 Implementacion:
 
@@ -298,7 +355,7 @@ Criterios de aceptacion:
 
 ## Fase 4: Diferenciador doctrinal con fuentes verificables
 
-### 4.1 Catalogo curado de fuentes
+### 4.1 Catalogo curado de fuentes — Pendiente
 
 Implementacion:
 
@@ -321,7 +378,7 @@ Criterios de aceptacion:
 - El asistente puede devolver referencias verificables.
 - Las fuentes usadas tienen licencia o enlace oficial claro.
 
-### 4.2 Recuperacion aumentada por fuentes
+### 4.2 Recuperacion aumentada por fuentes — Pendiente
 
 Implementacion:
 
@@ -336,7 +393,7 @@ Criterios de aceptacion:
 - El usuario puede tocar una fuente y verificarla.
 - Si no hay fuente suficiente, Theos lo dice.
 
-### 4.3 Evaluaciones doctrinales
+### 4.3 Evaluaciones doctrinales — Pendiente
 
 Implementacion:
 
@@ -360,7 +417,7 @@ Criterios de aceptacion:
 
 ## Fase 5: PWA y preparacion Android
 
-### 5.1 Convertir Theos en PWA
+### 5.1 Convertir Theos en PWA — Pendiente
 
 Implementacion:
 
@@ -385,7 +442,7 @@ Criterios de aceptacion:
 - La app puede abrirse como standalone en Android.
 - No se almacenan conversaciones en cache.
 
-### 5.2 Empaquetar con Trusted Web Activity
+### 5.2 Empaquetar con Trusted Web Activity — Pendiente
 
 Implementacion:
 
@@ -400,7 +457,7 @@ Criterios de aceptacion:
 - Digital Asset Links valida correctamente.
 - Se genera un Android App Bundle (`.aab`) listo para Play Console.
 
-### 5.3 Store listing
+### 5.3 Store listing — Pendiente
 
 Implementacion:
 
@@ -553,11 +610,14 @@ Criterios de aceptacion:
 
 ### Mes 1: Fundacion segura
 
-- Retirar modo directo en produccion.
-- Rate limiting, validacion y quotas.
+- Retirar modo directo en produccion. Estado: completado.
+- Rate limiting, validacion y quotas. Estado: parcial.
 - Cabeceras de seguridad.
-- Actualizacion legal.
-- Reporte de contenido dentro de app.
+- Actualizacion legal. Estado: parcial.
+- Reporte de contenido dentro de app. Estado: parcial.
+- Checklist formal de Play Console.
+- Observabilidad minima.
+- Moderacion de alto riesgo.
 
 ### Mes 2: Calidad de producto
 
@@ -592,18 +652,21 @@ Criterios de aceptacion:
 
 ## Backlog tecnico priorizado
 
-1. Mover system prompt al servidor y no aceptar `system` del cliente en produccion.
-2. Agregar rate limiting y validacion estricta de payload.
-3. Agregar endpoint y UI de reportes.
-4. Actualizar privacidad/terminos para proveedores reales y reportes.
-5. Agregar controles de chat: detener, reintentar, copiar, compartir.
-6. Agregar moderacion de temas de alto riesgo.
-7. Crear manifest PWA y service worker.
-8. Servir dependencias frontend localmente o endurecer CSP para CDN.
-9. Crear catalogo inicial de fuentes verificables.
-10. Crear pruebas automatizadas y evaluaciones doctrinales.
-11. Empaquetar TWA y configurar Digital Asset Links.
-12. Preparar Play Console, screenshots y beta cerrada.
+1. Completado: mover system prompt al servidor y no aceptar `system` del cliente en produccion.
+2. Parcial: agregar rate limiting y validacion estricta de payload.
+3. Parcial: agregar endpoint y UI de reportes.
+4. Parcial: actualizar privacidad/terminos para proveedores reales y reportes.
+5. Siguiente: crear checklist formal de Play Console y decisiones de publico/edad.
+6. Siguiente: agregar cabeceras de seguridad y CSP.
+7. Siguiente: agregar observabilidad minima sin prompts completos.
+8. Siguiente: agregar moderacion de temas de alto riesgo.
+9. Agregar controles de chat: detener, reintentar, copiar, compartir.
+10. Crear manifest PWA y service worker.
+11. Servir dependencias frontend localmente o endurecer CSP para CDN.
+12. Crear catalogo inicial de fuentes verificables.
+13. Crear pruebas automatizadas y evaluaciones doctrinales.
+14. Empaquetar TWA y configurar Digital Asset Links.
+15. Preparar Play Console, screenshots y beta cerrada.
 
 ## Decisiones pendientes
 
@@ -627,4 +690,3 @@ Theos estara listo para enviar a revision cuando:
 - Haya pruebas basicas automatizadas y evaluaciones doctrinales.
 - Se haya realizado beta cerrada con usuarios reales.
 - Exista runbook para incidentes y operacion.
-
