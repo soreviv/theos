@@ -32,8 +32,7 @@
       "server.js",
       "system-prompt.js",
       "public/**/*",
-      "node_modules/**/*",
-      ".env"
+      "node_modules/**/*"
     ],
     "linux": {
       "target": ["AppImage", "deb"],

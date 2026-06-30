@@ -4,19 +4,21 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 let mainWindow;
+let serverPort = null;
 
 async function createWindow() {
-  let port;
-  try {
-    const { startServer } = await import('./server.js');
-    port = await startServer();
-  } catch (err) {
-    dialog.showErrorBox(
-      'Error de configuración',
-      `${err.message}\n\nCrea un archivo .env en:\n${__dirname}\n\nEjemplo:\nANTHROPIC_API_KEY=sk-ant-...`
-    );
-    app.quit();
-    return;
+  if (!serverPort) {
+    try {
+      const { startServer } = await import('./server.js');
+      serverPort = await startServer();
+    } catch (err) {
+      dialog.showErrorBox(
+        'Error de configuración',
+        `${err.message}\n\nCrea un archivo .env en:\n${__dirname}\n\nEjemplo:\nANTHROPIC_API_KEY=sk-ant-...`
+      );
+      app.quit();
+      return;
+    }
   }
 
   mainWindow = new BrowserWindow({
@@ -30,7 +32,7 @@ async function createWindow() {
   });
 
   mainWindow.setMenuBarVisibility(false);
-  mainWindow.loadURL(`http://localhost:${port}`);
+  mainWindow.loadURL(`http://localhost:${serverPort}`);
   mainWindow.on('closed', () => { mainWindow = null; });
 }
 

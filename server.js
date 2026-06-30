@@ -66,6 +66,15 @@ app.use(express.static(STATIC_DIR, { dotfiles: 'deny' }));
 app.use(express.json({ limit: '1mb' }));
 
 const rateLimitStore = new Map();
+setInterval(() => {
+  const now = Date.now();
+  for (const [clientId, current] of rateLimitStore.entries()) {
+    if (now > current.resetAt) {
+      rateLimitStore.delete(clientId);
+    }
+  }
+}, 5 * 60 * 1000);
+
 const reportStore = [];
 const REPORT_REASONS = new Set([
   'doctrinal_error',
@@ -120,6 +129,9 @@ function sanitizeMessages(rawMessages) {
       const content = message.content.trim();
       if (!content) {
         throw new Error('El historial contiene un mensaje vacio.');
+      }
+      if (content.length > MAX_MESSAGE_CHARS) {
+        throw new Error(`Cada mensaje debe tener ${MAX_MESSAGE_CHARS} caracteres o menos.`);
       }
 
       return { role: message.role, content };

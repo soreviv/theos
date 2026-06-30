@@ -442,7 +442,8 @@ function createAssistantBubble() {
   return bubble;
 }
 
-function appendReportAction(bubbleEl, content) {
+function appendReportAction(bubbleEl, content, provider, model) {
+  if (!state.useBackendProxy) return;
   const wrapper = bubbleEl.closest('.message');
   if (!wrapper || wrapper.querySelector('.report-btn')) return;
 
@@ -453,11 +454,7 @@ function appendReportAction(bubbleEl, content) {
   button.type = 'button';
   button.className = 'report-btn';
   button.textContent = 'Reportar';
-  button.addEventListener('click', () => openReportModal({
-    content,
-    provider: DOM.providerSelect.value,
-    model: DOM.modelSelect.value,
-  }));
+  button.addEventListener('click', () => openReportModal({ content, provider, model }));
 
   actions.appendChild(button);
   wrapper.appendChild(actions);
@@ -541,11 +538,13 @@ async function sendMessage() {
 
   // Create assistant bubble early (for streaming)
   const bubbleEl = createAssistantBubble();
+  const activeProvider = DOM.providerSelect.value;
+  const activeModel = DOM.modelSelect.value;
 
   try {
     const fullText = await callAPI(bubbleEl);
     state.conversationHistory.push({ role: 'assistant', content: fullText });
-    appendReportAction(bubbleEl, fullText);
+    appendReportAction(bubbleEl, fullText, activeProvider, activeModel);
   } catch (err) {
     // Remove the empty assistant bubble if nothing was streamed
     if (!bubbleEl.textContent.trim()) {
