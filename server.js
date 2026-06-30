@@ -37,7 +37,7 @@ const KEYS = {
 
 const PROVIDERS = {
   openai: {
-    models: ['gpt-4o', 'gpt-4o-mini', 'gpt-4.1'],
+    models: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo'],
   },
   anthropic: {
     models: ['claude-sonnet-4-6', 'claude-opus-4-6'],
