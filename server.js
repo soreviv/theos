@@ -125,9 +125,7 @@ function sanitizeMessages(rawMessages) {
       if (!content) {
         throw new Error('El historial contiene un mensaje vacio.');
       }
-      if (content.length > MAX_MESSAGE_CHARS) {
-        throw new Error(`Cada mensaje debe tener ${MAX_MESSAGE_CHARS} caracteres o menos.`);
-      }
+
       return { role: message.role, content };
     });
 
