@@ -43,7 +43,7 @@ const PROVIDERS = {
     models: ['claude-sonnet-4-6', 'claude-opus-4-6'],
   },
   gemini: {
-    models: ['gemini-3-flash-preview', 'gemini-2.5-flash'],
+    models: ['gemini-2.0-flash', 'gemini-2.5-flash'],
   },
   mistral: {
     models: ['mistral-large-latest', 'mistral-small-latest', 'open-mixtral-8x22b'],
