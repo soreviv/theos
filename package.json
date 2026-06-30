@@ -3,9 +3,14 @@
   "version": "1.0.0",
   "description": "Catholic theologian chatbot — Anthropic API proxy",
   "type": "module",
+  "main": "electron-main.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js"
+    "dev": "node --watch server.js",
+    "electron": "electron --no-sandbox .",
+    "build:linux": "electron-builder --linux",
+    "build:win": "electron-builder --win",
+    "build:mac": "electron-builder --mac"
   },
   "dependencies": {
     "dotenv": "^16.4.5",
@@ -14,5 +19,31 @@
   },
   "engines": {
     "node": ">=18.0.0"
+  },
+  "devDependencies": {
+    "electron": "^42.5.1",
+    "electron-builder": "^26.15.3"
+  },
+  "build": {
+    "appId": "com.theos.app",
+    "productName": "Theos",
+    "files": [
+      "electron-main.js",
+      "server.js",
+      "system-prompt.js",
+      "public/**/*",
+      "node_modules/**/*",
+      ".env"
+    ],
+    "linux": {
+      "target": ["AppImage", "deb"],
+      "category": "Education"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "mac": {
+      "target": "dmg"
+    }
   }
 }

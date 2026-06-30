@@ -12,7 +12,7 @@ import { fileURLToPath } from 'url';
 import { randomUUID } from 'crypto';
 import path from 'path';
 import dotenv from 'dotenv';
-import rateLimit from 'express-rate-limit';
+import { SYSTEM_PROMPT } from './system-prompt.js';
 
 dotenv.config();
 
@@ -60,10 +60,6 @@ const availableProviders = Object.entries(KEYS)
   .filter(([, v]) => v)
   .map(([k]) => k);
 
-if (availableProviders.length === 0) {
-  console.error('[theos] No API keys configured. Add at least one to .env');
-  process.exit(1);
-}
 
 const app = express();
 app.use(express.static(STATIC_DIR, { dotfiles: 'deny' }));
@@ -237,8 +233,6 @@ app.post('/api/chat', rateLimit, async (req, res) => {
   } catch (err) {
     return res.status(400).json({ error: { message: err.message } });
   }
-app.post('/api/chat', async (req, res) => {
-  const { provider = 'gemini', model, messages, max_tokens = 2048 } = req.body;
 
   const { provider, model, messages } = chatRequest;
   const key = KEYS[provider];
@@ -289,13 +283,6 @@ app.post('/api/chat', async (req, res) => {
     } else if (provider === 'gemini') {
       const systemMsg = messagesWithSystem.find(m => m.role === 'system');
       const contents  = messagesWithSystem
-      if (typeof model !== 'string' || !GEMINI_ALLOWED_MODELS.has(model)) {
-        return res.status(400).json({ error: { message: 'Modelo de Gemini no permitido.' } });
-      }
-      const geminiModel = model;
-
-      const systemMsg = messages.find(m => m.role === 'system');
-      const contents  = messages
         .filter(m => m.role !== 'system')
         .map(m => ({
           role:  m.role === 'assistant' ? 'model' : 'user',
@@ -311,7 +298,7 @@ app.post('/api/chat', async (req, res) => {
       }
 
       upstream = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(geminiModel)}:streamGenerateContent?key=${key}&alt=sse`,
+        `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:streamGenerateContent?key=${key}&alt=sse`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -348,11 +335,26 @@ app.post('/api/chat', async (req, res) => {
 });
 
 // ─── Catch-all: return index.html (SPA) ──────────────────────
-app.get('*', spaLimiter, (_req, res) => {
+app.get('*', rateLimit, (_req, res) => {
   res.sendFile(path.join(STATIC_DIR, 'index.html'));
 });
 
-createServer(app).listen(PORT, () => {
-  console.log(`[theos] Running at http://localhost:${PORT}`);
-  console.log(`[theos] Providers available: ${availableProviders.join(', ')}`);
-});
+export function startServer(port = PORT) {
+  if (availableProviders.length === 0) {
+    throw new Error('No API keys configured. Add at least one to .env');
+  }
+  return new Promise((resolve) => {
+    createServer(app).listen(port, () => {
+      console.log(`[theos] Running at http://localhost:${port}`);
+      console.log(`[theos] Providers: ${availableProviders.join(', ')}`);
+      resolve(port);
+    });
+  });
+}
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  startServer().catch((err) => {
+    console.error('[theos]', err.message);
+    process.exit(1);
+  });
+}
