@@ -12,11 +12,12 @@ import { fileURLToPath } from 'url';
 import { randomUUID } from 'crypto';
 import path from 'path';
 import dotenv from 'dotenv';
-import { SYSTEM_PROMPT } from './system-prompt.js';
+import rateLimit from 'express-rate-limit';
 
 dotenv.config();
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const STATIC_DIR = path.join(__dirname, 'public');
 const PORT = process.env.PORT || 3000;
 const MAX_TOKENS = Number.parseInt(process.env.MAX_TOKENS || '2048', 10);
 const MAX_MESSAGES = Number.parseInt(process.env.MAX_MESSAGES || '24', 10);
@@ -49,6 +50,12 @@ const PROVIDERS = {
   },
 };
 
+const GEMINI_ALLOWED_MODELS = new Set([
+  'gemini-1.5-pro',
+  'gemini-1.5-flash',
+  'gemini-1.0-pro',
+]);
+
 const availableProviders = Object.entries(KEYS)
   .filter(([, v]) => v)
   .map(([k]) => k);
@@ -59,7 +66,7 @@ if (availableProviders.length === 0) {
 }
 
 const app = express();
-app.use(express.static(__dirname));
+app.use(express.static(STATIC_DIR, { dotfiles: 'deny' }));
 app.use(express.json({ limit: '1mb' }));
 
 const rateLimitStore = new Map();
@@ -232,6 +239,8 @@ app.post('/api/chat', rateLimit, async (req, res) => {
   } catch (err) {
     return res.status(400).json({ error: { message: err.message } });
   }
+app.post('/api/chat', async (req, res) => {
+  const { provider = 'gemini', model, messages, max_tokens = 2048 } = req.body;
 
   const { provider, model, messages } = chatRequest;
   const key = KEYS[provider];
@@ -282,6 +291,13 @@ app.post('/api/chat', rateLimit, async (req, res) => {
     } else if (provider === 'gemini') {
       const systemMsg = messagesWithSystem.find(m => m.role === 'system');
       const contents  = messagesWithSystem
+      if (typeof model !== 'string' || !GEMINI_ALLOWED_MODELS.has(model)) {
+        return res.status(400).json({ error: { message: 'Modelo de Gemini no permitido.' } });
+      }
+      const geminiModel = model;
+
+      const systemMsg = messages.find(m => m.role === 'system');
+      const contents  = messages
         .filter(m => m.role !== 'system')
         .map(m => ({
           role:  m.role === 'assistant' ? 'model' : 'user',
@@ -297,7 +313,7 @@ app.post('/api/chat', rateLimit, async (req, res) => {
       }
 
       upstream = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?key=${key}&alt=sse`,
+        `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(geminiModel)}:streamGenerateContent?key=${key}&alt=sse`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -334,8 +350,8 @@ app.post('/api/chat', rateLimit, async (req, res) => {
 });
 
 // ─── Catch-all: return index.html (SPA) ──────────────────────
-app.get('*', (_req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+app.get('*', spaLimiter, (_req, res) => {
+  res.sendFile(path.join(STATIC_DIR, 'index.html'));
 });
 
 createServer(app).listen(PORT, () => {
