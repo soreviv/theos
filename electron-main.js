@@ -32,11 +32,23 @@ async function createWindow() {
   });
 
   mainWindow.setMenuBarVisibility(false);
-  mainWindow.loadURL(`http://localhost:${serverPort}`);
+  try {
+    await mainWindow.loadURL(`http://localhost:${serverPort}`);
+  } catch (err) {
+    dialog.showErrorBox(
+      'Error al cargar Theos',
+      `No se pudo cargar la interfaz en http://localhost:${serverPort}\n\n${err.message}`
+    );
+    app.quit();
+    return;
+  }
   mainWindow.on('closed', () => { mainWindow = null; });
 }
 
-app.whenReady().then(createWindow);
+app.whenReady().then(createWindow).catch((err) => {
+  dialog.showErrorBox('Error al iniciar Theos', err?.message || String(err));
+  app.quit();
+});
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
