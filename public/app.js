@@ -492,11 +492,14 @@ function renderWelcome() {
       <div class="api-warning">
         <span>⚙</span>
         Configura tu API key en
-        <button onclick="openSettings()" style="background:none;border:none;text-decoration:underline;color:inherit;cursor:pointer;font-size:inherit;padding:0">Configuración</button>
+        <button type="button" class="welcome-settings-btn" style="background:none;border:none;text-decoration:underline;color:inherit;cursor:pointer;font-size:inherit;padding:0">Configuración</button>
         para comenzar.
       </div>`}
     </div>
   `;
+
+  // Attach listener instead of an inline onclick handler (CSP-safe).
+  DOM.messages.querySelector('.welcome-settings-btn')?.addEventListener('click', openSettings);
 }
 
 function scrollToBottom() {
@@ -810,9 +813,6 @@ function setDirectMode(allowed) {
   DOM.apiKeyInput.placeholder = 'Requiere servidor';
   DOM.sendBtn.disabled        = true;
 }
-
-// Expose openSettings globally for the welcome button's inline onclick
-window.openSettings = openSettings;
 
 // Boot
 document.addEventListener('DOMContentLoaded', init);

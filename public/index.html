@@ -206,9 +206,17 @@
     <a href="/terminos-condiciones">Términos</a>
   </nav>
 
-  <!-- Dependencies (CDN, no build step) -->
-  <script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
+  <!-- Dependencies (CDN, no build step) — pinned + Subresource Integrity -->
+  <script
+    src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"
+    integrity="sha384-/TQbtLCAerC3jgaim+N78RZSDYV7ryeoBCVqTuzRrFec2akfBkHS7ACQ3PQhvMVi"
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"></script>
+  <script
+    src="https://cdn.jsdelivr.net/npm/dompurify@3.1.7/dist/purify.min.js"
+    integrity="sha384-XQqX/4yiUGu+oyr87jvWzRuqBUK/adrY0DunhL+tID9m/9dwSpV8h9Fk/Sg6ifVQ"
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"></script>
   <script src="app.js"></script>
 
 </body>
