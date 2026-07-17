@@ -29,6 +29,11 @@ const RATE_LIMIT_WINDOW_MS = Number.parseInt(process.env.RATE_LIMIT_WINDOW_MS ||
 const RATE_LIMIT_MAX = Number.parseInt(process.env.RATE_LIMIT_MAX || '20', 10);
 const MAX_STORED_REPORTS = Number.parseInt(process.env.MAX_STORED_REPORTS || '200', 10);
 
+// Number of reverse proxies in front of the app (Railway, Render, nginx, …).
+// Only when set does Express trust X-Forwarded-For; otherwise the client-supplied
+// header is ignored so it cannot be spoofed to bypass rate limiting.
+const TRUST_PROXY = process.env.TRUST_PROXY || '';
+
 const KEYS = {
   anthropic: process.env.ANTHROPIC_API_KEY || '',
   openai:    process.env.OPENAI_API_KEY    || '',
@@ -51,18 +56,44 @@ const PROVIDERS = {
   },
 };
 
-const GEMINI_ALLOWED_MODELS = new Set([
-  'gemini-1.5-pro',
-  'gemini-1.5-flash',
-  'gemini-1.0-pro',
-]);
-
 const availableProviders = Object.entries(KEYS)
   .filter(([, v]) => v)
   .map(([k]) => k);
 
 
 const app = express();
+
+// Trust the reverse proxy only when explicitly configured, so req.ip reflects the
+// real client and X-Forwarded-For cannot be forged to evade rate limiting.
+if (TRUST_PROXY) {
+  const numeric = Number.parseInt(TRUST_PROXY, 10);
+  app.set('trust proxy', Number.isNaN(numeric) ? TRUST_PROXY : numeric);
+}
+
+// Baseline security headers (defense-in-depth; no external dependency needed).
+app.use((_req, res, next) => {
+  res.setHeader(
+    'Content-Security-Policy',
+    [
+      "default-src 'self'",
+      "script-src 'self' https://cdn.jsdelivr.net",
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data:",
+      "font-src 'self'",
+      "connect-src 'self'",
+      "object-src 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+      "frame-ancestors 'none'",
+    ].join('; ')
+  );
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'no-referrer');
+  res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+  next();
+});
+
 app.use(express.static(STATIC_DIR, { dotfiles: 'deny' }));
 app.use(express.json({ limit: '1mb' }));
 
@@ -88,9 +119,10 @@ const REPORT_REASONS = new Set([
 ]);
 
 function getClientId(req) {
-  return req.headers['x-forwarded-for']?.split(',')[0]?.trim()
-    || req.socket.remoteAddress
-    || 'unknown';
+  // req.ip honors the configured `trust proxy` setting: it uses X-Forwarded-For
+  // only when a proxy is trusted, otherwise the direct socket address. This
+  // prevents clients from spoofing the header to bypass rate limiting.
+  return req.ip || req.socket.remoteAddress || 'unknown';
 }
 
 function rateLimit(req, res, next) {
@@ -307,11 +339,11 @@ app.post('/api/chat', rateLimit, async (req, res) => {
       console.error('[theos] Stream error:', streamErr.message);
       reader.cancel().catch(() => {});
       if (!res.headersSent) {
-        res.status(502).json({ error: { message: 'Proxy error: ' + streamErr.message } });
+        sendError(res, 502, 'Error al recibir la respuesta del proveedor de IA.');
       } else if (!res.writableEnded) {
         // The response is already streaming, so surface the failure as an SSE
         // error event instead of leaving the connection hanging.
-        res.write(`event: error\ndata: ${JSON.stringify({ error: { message: streamErr.message } })}\n\n`);
+        res.write(`event: error\ndata: ${JSON.stringify({ error: { message: 'Error al recibir la respuesta del proveedor de IA.' } })}\n\n`);
         res.end();
       }
     }
@@ -319,7 +351,7 @@ app.post('/api/chat', rateLimit, async (req, res) => {
   } catch (err) {
     console.error('[theos] Proxy error:', err.message);
     if (!res.headersSent) {
-      sendError(res, 502, 'Proxy error: ' + err.message);
+      sendError(res, 502, 'Error al contactar el proveedor de IA. Intenta de nuevo.');
     }
   }
 });
