@@ -66,7 +66,7 @@ app.use(express.static(STATIC_DIR, { dotfiles: 'deny' }));
 app.use(express.json({ limit: '1mb' }));
 
 const rateLimitStore = new Map();
-setInterval(() => {
+const rateLimitCleanup = setInterval(() => {
   const now = Date.now();
   for (const [clientId, current] of rateLimitStore.entries()) {
     if (now > current.resetAt) {
@@ -74,6 +74,8 @@ setInterval(() => {
     }
   }
 }, 5 * 60 * 1000);
+// Do not keep the process alive solely for the cleanup timer (e.g. under tests).
+rateLimitCleanup.unref?.();
 
 const reportStore = [];
 const REPORT_REASONS = new Set([
@@ -350,6 +352,18 @@ app.post('/api/chat', rateLimit, async (req, res) => {
 app.get('*', rateLimit, (_req, res) => {
   res.sendFile(path.join(STATIC_DIR, 'index.html'));
 });
+
+export {
+  app,
+  PROVIDERS,
+  REPORT_REASONS,
+  getClientId,
+  rateLimit,
+  sanitizeMessages,
+  validateChatRequest,
+  withSystemMessage,
+  sanitizeReport,
+};
 
 export function startServer(port = PORT) {
   if (availableProviders.length === 0) {
