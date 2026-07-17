@@ -59,7 +59,7 @@ test('GET /api/health reports proxy mode and configured providers', async () => 
   assert.equal(body.ok, true);
   assert.equal(body.mode, 'proxy');
   assert.deepEqual(body.providers.sort(), ['anthropic', 'gemini', 'openai']);
-  assert.deepEqual(body.models.openai, ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo']);
+  assert.deepEqual(body.models.openai, ['gpt-4o', 'gpt-4o-mini', 'gpt-4.1']);
 });
 
 // ─── /api/reports ─────────────────────────────────────────────
