@@ -191,14 +191,14 @@
       </div>
       <div class="doc-section-body">
         <p>
-          Si introduces una API key en el panel de configuración, esta se guarda
-          únicamente en el <code>sessionStorage</code> de tu propio navegador.
+          Si introduces una API key en el panel de configuración, esta se mantiene
+          únicamente en la memoria de tu propio navegador mientras la pestaña está abierta.
         </p>
         <ul>
-          <li>El <code>sessionStorage</code> es local a tu pestaña y a tu dispositivo</li>
-          <li>Se borra automáticamente cuando cierras la pestaña o el navegador</li>
+          <li>La clave vive solo en memoria, local a tu pestaña y a tu dispositivo</li>
+          <li>Se borra automáticamente al recargar, cerrar la pestaña o el navegador</li>
           <li>Nunca se envía a los servidores de Theos</li>
-          <li>No se utiliza <code>localStorage</code> ni cookies persistentes</li>
+          <li>No se guarda en <code>sessionStorage</code>, <code>localStorage</code> ni cookies persistentes</li>
         </ul>
         <p>
           El historial de conversación existe solo en la memoria RAM de tu navegador
