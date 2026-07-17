@@ -13,6 +13,7 @@ import { randomUUID } from 'crypto';
 import path from 'path';
 import dotenv from 'dotenv';
 import { SYSTEM_PROMPT } from './system-prompt.js';
+import { buildProviderRequest } from './public/shared/providers.js';
 
 dotenv.config();
 
@@ -169,6 +170,10 @@ function withSystemMessage(messages) {
   return [{ role: 'system', content: SYSTEM_PROMPT }, ...messages];
 }
 
+function sendError(res, status, message) {
+  return res.status(status).json({ error: { message } });
+}
+
 function sanitizeReport(body) {
   const reason = String(body?.reason || '').trim();
   const comment = String(body?.comment || '').trim();
@@ -218,7 +223,7 @@ app.post('/api/reports', rateLimit, (req, res) => {
   try {
     report = sanitizeReport(req.body);
   } catch (err) {
-    return res.status(400).json({ error: { message: err.message } });
+    return sendError(res, 400, err.message);
   }
 
   reportStore.push(report);
@@ -243,7 +248,7 @@ app.post('/api/chat', rateLimit, async (req, res) => {
   try {
     chatRequest = validateChatRequest(req.body);
   } catch (err) {
-    return res.status(400).json({ error: { message: err.message } });
+    return sendError(res, 400, err.message);
   }
 
   const { provider, model, messages } = chatRequest;
@@ -251,75 +256,24 @@ app.post('/api/chat', rateLimit, async (req, res) => {
   const messagesWithSystem = withSystemMessage(messages);
 
   try {
-    let upstream;
-
-    if (provider === 'anthropic') {
-      const systemMsg   = messagesWithSystem.find(m => m.role === 'system');
-      const chatMessages = messagesWithSystem.filter(m => m.role !== 'system');
-      upstream = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'x-api-key':         key,
-          'anthropic-version': '2023-06-01',
-          'content-type':      'application/json',
-        },
-        body: JSON.stringify({
-          model,
-          max_tokens: MAX_TOKENS,
-          system:   systemMsg?.content,
-          messages: chatMessages,
-          stream:   true,
-        }),
+    let request;
+    try {
+      request = buildProviderRequest({
+        provider,
+        model,
+        apiKey: key,
+        messages: messagesWithSystem,
+        maxTokens: MAX_TOKENS,
       });
-
-    } else if (provider === 'openai') {
-      upstream = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${key}`,
-          'Content-Type':  'application/json',
-        },
-        body: JSON.stringify({ model, max_tokens: MAX_TOKENS, messages: messagesWithSystem, stream: true }),
-      });
-
-    } else if (provider === 'mistral') {
-      upstream = await fetch('https://api.mistral.ai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${key}`,
-          'Content-Type':  'application/json',
-        },
-        body: JSON.stringify({ model, max_tokens: MAX_TOKENS, messages: messagesWithSystem, stream: true }),
-      });
-
-    } else if (provider === 'gemini') {
-      const systemMsg = messagesWithSystem.find(m => m.role === 'system');
-      const contents  = messagesWithSystem
-        .filter(m => m.role !== 'system')
-        .map(m => ({
-          role:  m.role === 'assistant' ? 'model' : 'user',
-          parts: [{ text: m.content }],
-        }));
-
-      const geminiBody = {
-        contents,
-        generationConfig: { maxOutputTokens: MAX_TOKENS },
-      };
-      if (systemMsg) {
-        geminiBody.systemInstruction = { parts: [{ text: systemMsg.content }] };
-      }
-
-      upstream = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:streamGenerateContent?key=${key}&alt=sse`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(geminiBody),
-        }
-      );
-    } else {
-      return res.status(400).json({ error: { message: `Proveedor desconocido: ${provider}` } });
+    } catch (err) {
+      return sendError(res, 400, err.message);
     }
+
+    const upstream = await fetch(request.url, {
+      method: 'POST',
+      headers: request.headers,
+      body: JSON.stringify(request.body),
+    });
 
     if (!upstream.ok) {
       const errBody = await upstream.text();
@@ -363,7 +317,7 @@ app.post('/api/chat', rateLimit, async (req, res) => {
   } catch (err) {
     console.error('[theos] Proxy error:', err.message);
     if (!res.headersSent) {
-      res.status(502).json({ error: { message: 'Proxy error: ' + err.message } });
+      sendError(res, 502, 'Proxy error: ' + err.message);
     }
   }
 });
