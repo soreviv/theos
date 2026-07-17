@@ -5,6 +5,12 @@
 
 'use strict';
 
+import {
+  buildProviderRequest,
+  extractSSEDelta,
+  extractErrorMessage,
+} from './shared/providers.js';
+
 // ──────────────────────────────────────────────────────────────
 // 1. SYSTEM PROMPT
 // ──────────────────────────────────────────────────────────────
@@ -296,10 +302,7 @@ async function callProxy(bubbleEl, provider, model, messages) {
   });
 
   if (!res.ok) {
-    let errMsg = `Error de API: ${res.status}`;
-    try { const j = await res.json(); if (j?.error?.message) errMsg = j.error.message; }
-    catch { /* ignore */ }
-    throw new Error(errMsg);
+    throw new Error(await extractErrorMessage(res));
   }
 
   return readStream(res.body, bubbleEl, provider);
@@ -307,47 +310,19 @@ async function callProxy(bubbleEl, provider, model, messages) {
 
 /** Calls the provider API directly from the browser (direct mode, no proxy). */
 async function callDirect(bubbleEl, provider, model, apiKey, messages) {
-  let endpoint, headers, body;
+  const { url, headers, body } = buildProviderRequest({
+    provider,
+    model,
+    apiKey,
+    messages,
+    maxTokens: 2048,
+    directBrowser: true,
+  });
 
-  if (provider === 'anthropic') {
-    endpoint = 'https://api.anthropic.com/v1/messages';
-    headers  = {
-      'Content-Type':                                    'application/json',
-      'x-api-key':                                       apiKey,
-      'anthropic-version':                               '2023-06-01',
-      'anthropic-dangerous-direct-browser-access':       'true',
-    };
-    const system  = messages.find(m => m.role === 'system');
-    const chat    = messages.filter(m => m.role !== 'system');
-    body = { model, max_tokens: 2048, system: system?.content, messages: chat, stream: true };
-
-  } else if (provider === 'openai') {
-    endpoint = 'https://api.openai.com/v1/chat/completions';
-    headers  = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` };
-    body = { model, max_tokens: 2048, messages, stream: true };
-
-  } else if (provider === 'gemini') {
-    const system   = messages.find(m => m.role === 'system');
-    const contents = messages
-      .filter(m => m.role !== 'system')
-      .map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] }));
-    endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?key=${apiKey}&alt=sse`;
-    headers  = { 'Content-Type': 'application/json' };
-    body = { contents, generationConfig: { maxOutputTokens: 2048 } };
-    if (system) body.systemInstruction = { parts: [{ text: system.content }] };
-  } else if (provider === 'mistral') {
-    endpoint = 'https://api.mistral.ai/v1/chat/completions';
-    headers  = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` };
-    body = { model, max_tokens: 2048, messages, stream: true };
-  }
-
-  const res = await fetch(endpoint, { method: 'POST', headers, body: JSON.stringify(body) });
+  const res = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body) });
 
   if (!res.ok) {
-    let errMsg = `Error de API: ${res.status}`;
-    try { const j = await res.json(); if (j?.error?.message) errMsg = j.error.message; }
-    catch { /* ignore */ }
-    throw new Error(errMsg);
+    throw new Error(await extractErrorMessage(res));
   }
 
   return readStream(res.body, bubbleEl, provider);
@@ -363,39 +338,44 @@ async function readStream(body, bubbleEl, provider) {
   let fullText  = '';
   let buffer    = '';
 
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
 
-    buffer += decoder.decode(value, { stream: true });
-    const lines = buffer.split('\n');
-    buffer = lines.pop();
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop();
 
-    for (const line of lines) {
-      if (!line.startsWith('data: ')) continue;
-      const data = line.slice(6).trim();
-      if (data === '[DONE]') continue;
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const data = line.slice(6).trim();
+        if (data === '[DONE]') continue;
 
-      let event;
-      try { event = JSON.parse(data); } catch { continue; }
+        let event;
+        try { event = JSON.parse(data); } catch { continue; }
 
-      let delta = null;
-      if (provider === 'anthropic') {
-        if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta') {
-          delta = event.delta.text;
+        // Surface mid-stream error events instead of silently dropping them.
+        if (event?.type === 'error' || event?.error) {
+          const message = event.error?.message
+            || event.message
+            || 'El proveedor devolvió un error durante la respuesta.';
+          throw new Error(message);
         }
-      } else if (provider === 'openai' || provider === 'mistral') {
-        delta = event.choices?.[0]?.delta?.content ?? null;
-      } else if (provider === 'gemini') {
-        delta = event.candidates?.[0]?.content?.parts?.[0]?.text ?? null;
-      }
 
-      if (delta) {
-        fullText += delta;
-        renderMarkdown(bubbleEl, fullText);
-        scrollToBottom();
+        const delta = extractSSEDelta(provider, event);
+
+        if (delta) {
+          fullText += delta;
+          renderMarkdown(bubbleEl, fullText);
+          scrollToBottom();
+        }
       }
     }
+  } catch (err) {
+    // Cancel the underlying connection before propagating so it is not leaked.
+    reader.cancel().catch(() => {});
+    throw err;
   }
 
   renderMarkdown(bubbleEl, fullText);
@@ -665,12 +645,7 @@ async function submitReport() {
     });
 
     if (!res.ok) {
-      let message = `No se pudo enviar el reporte (${res.status}).`;
-      try {
-        const data = await res.json();
-        if (data?.error?.message) message = data.error.message;
-      } catch { /* ignore */ }
-      throw new Error(message);
+      throw new Error(await extractErrorMessage(res, `No se pudo enviar el reporte (${res.status}).`));
     }
 
     DOM.reportStatus.textContent = 'Gracias. Revisaremos este reporte.';

@@ -13,6 +13,7 @@ import { randomUUID } from 'crypto';
 import path from 'path';
 import dotenv from 'dotenv';
 import { SYSTEM_PROMPT } from './system-prompt.js';
+import { buildProviderRequest } from './public/shared/providers.js';
 
 dotenv.config();
 
@@ -201,6 +202,10 @@ function withSystemMessage(messages) {
   return [{ role: 'system', content: SYSTEM_PROMPT }, ...messages];
 }
 
+function sendError(res, status, message) {
+  return res.status(status).json({ error: { message } });
+}
+
 function sanitizeReport(body) {
   const reason = String(body?.reason || '').trim();
   const comment = String(body?.comment || '').trim();
@@ -250,7 +255,7 @@ app.post('/api/reports', rateLimit, (req, res) => {
   try {
     report = sanitizeReport(req.body);
   } catch (err) {
-    return res.status(400).json({ error: { message: err.message } });
+    return sendError(res, 400, err.message);
   }
 
   reportStore.push(report);
@@ -275,7 +280,7 @@ app.post('/api/chat', rateLimit, async (req, res) => {
   try {
     chatRequest = validateChatRequest(req.body);
   } catch (err) {
-    return res.status(400).json({ error: { message: err.message } });
+    return sendError(res, 400, err.message);
   }
 
   const { provider, model, messages } = chatRequest;
@@ -283,79 +288,32 @@ app.post('/api/chat', rateLimit, async (req, res) => {
   const messagesWithSystem = withSystemMessage(messages);
 
   try {
-    let upstream;
-
-    if (provider === 'anthropic') {
-      const systemMsg   = messagesWithSystem.find(m => m.role === 'system');
-      const chatMessages = messagesWithSystem.filter(m => m.role !== 'system');
-      upstream = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'x-api-key':         key,
-          'anthropic-version': '2023-06-01',
-          'content-type':      'application/json',
-        },
-        body: JSON.stringify({
-          model,
-          max_tokens: MAX_TOKENS,
-          system:   systemMsg?.content,
-          messages: chatMessages,
-          stream:   true,
-        }),
+    let request;
+    try {
+      request = buildProviderRequest({
+        provider,
+        model,
+        apiKey: key,
+        messages: messagesWithSystem,
+        maxTokens: MAX_TOKENS,
       });
-
-    } else if (provider === 'openai') {
-      upstream = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${key}`,
-          'Content-Type':  'application/json',
-        },
-        body: JSON.stringify({ model, max_tokens: MAX_TOKENS, messages: messagesWithSystem, stream: true }),
-      });
-
-    } else if (provider === 'mistral') {
-      upstream = await fetch('https://api.mistral.ai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${key}`,
-          'Content-Type':  'application/json',
-        },
-        body: JSON.stringify({ model, max_tokens: MAX_TOKENS, messages: messagesWithSystem, stream: true }),
-      });
-
-    } else if (provider === 'gemini') {
-      const systemMsg = messagesWithSystem.find(m => m.role === 'system');
-      const contents  = messagesWithSystem
-        .filter(m => m.role !== 'system')
-        .map(m => ({
-          role:  m.role === 'assistant' ? 'model' : 'user',
-          parts: [{ text: m.content }],
-        }));
-
-      const geminiBody = {
-        contents,
-        generationConfig: { maxOutputTokens: MAX_TOKENS },
-      };
-      if (systemMsg) {
-        geminiBody.systemInstruction = { parts: [{ text: systemMsg.content }] };
-      }
-
-      upstream = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:streamGenerateContent?key=${key}&alt=sse`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(geminiBody),
-        }
-      );
-    } else {
-      return res.status(400).json({ error: { message: `Proveedor desconocido: ${provider}` } });
+    } catch (err) {
+      return sendError(res, 400, err.message);
     }
+
+    const upstream = await fetch(request.url, {
+      method: 'POST',
+      headers: request.headers,
+      body: JSON.stringify(request.body),
+    });
 
     if (!upstream.ok) {
       const errBody = await upstream.text();
       return res.status(upstream.status).send(errBody);
+    }
+
+    if (!upstream.body) {
+      return res.status(502).json({ error: { message: 'El proveedor no devolvio ningun contenido.' } });
     }
 
     res.setHeader('Content-Type',  upstream.headers.get('content-type') || 'text/event-stream');
@@ -364,16 +322,34 @@ app.post('/api/chat', rateLimit, async (req, res) => {
     res.setHeader('X-Provider',    provider);
 
     const reader = upstream.body.getReader();
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) { res.end(); return; }
-      res.write(value);
+
+    // Abort the upstream read if the client disconnects mid-stream.
+    res.on('close', () => { reader.cancel().catch(() => {}); });
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        res.write(value);
+      }
+      res.end();
+    } catch (streamErr) {
+      console.error('[theos] Stream error:', streamErr.message);
+      reader.cancel().catch(() => {});
+      if (!res.headersSent) {
+        sendError(res, 502, 'Error al recibir la respuesta del proveedor de IA.');
+      } else if (!res.writableEnded) {
+        // The response is already streaming, so surface the failure as an SSE
+        // error event instead of leaving the connection hanging.
+        res.write(`event: error\ndata: ${JSON.stringify({ error: { message: 'Error al recibir la respuesta del proveedor de IA.' } })}\n\n`);
+        res.end();
+      }
     }
 
   } catch (err) {
     console.error('[theos] Proxy error:', err.message);
     if (!res.headersSent) {
-      res.status(502).json({ error: { message: 'Error al contactar el proveedor de IA. Intenta de nuevo.' } });
+      sendError(res, 502, 'Error al contactar el proveedor de IA. Intenta de nuevo.');
     }
   }
 });
@@ -387,8 +363,12 @@ export function startServer(port = PORT) {
   if (availableProviders.length === 0) {
     throw new Error('No API keys configured. Add at least one to .env');
   }
-  return new Promise((resolve) => {
-    createServer(app).listen(port, () => {
+  return new Promise((resolve, reject) => {
+    const server = createServer(app);
+    server.once('error', reject);
+    server.listen(port, () => {
+      server.removeListener('error', reject);
+      server.on('error', (err) => console.error('[theos] Server error:', err.message));
       console.log(`[theos] Running at http://localhost:${port}`);
       console.log(`[theos] Providers: ${availableProviders.join(', ')}`);
       resolve(port);
