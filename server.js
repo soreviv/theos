@@ -41,15 +41,18 @@ const KEYS = {
   mistral:   process.env.MISTRAL_API_KEY   || '',
 };
 
+// Keep these model lists in sync with PROVIDERS in public/app.js: the server
+// rejects any model not listed here, so a mismatch makes valid UI selections
+// fail with "Modelo no permitido" in proxy mode.
 const PROVIDERS = {
   openai: {
-    models: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo'],
+    models: ['gpt-4o', 'gpt-4o-mini', 'gpt-4.1'],
   },
   anthropic: {
     models: ['claude-sonnet-4-6', 'claude-opus-4-6'],
   },
   gemini: {
-    models: ['gemini-2.0-flash', 'gemini-2.5-flash'],
+    models: ['gemini-3-flash-preview', 'gemini-2.5-flash'],
   },
   mistral: {
     models: ['mistral-large-latest', 'mistral-small-latest', 'open-mixtral-8x22b'],
