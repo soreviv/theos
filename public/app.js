@@ -338,30 +338,44 @@ async function readStream(body, bubbleEl, provider) {
   let fullText  = '';
   let buffer    = '';
 
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
 
-    buffer += decoder.decode(value, { stream: true });
-    const lines = buffer.split('\n');
-    buffer = lines.pop();
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop();
 
-    for (const line of lines) {
-      if (!line.startsWith('data: ')) continue;
-      const data = line.slice(6).trim();
-      if (data === '[DONE]') continue;
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const data = line.slice(6).trim();
+        if (data === '[DONE]') continue;
 
-      let event;
-      try { event = JSON.parse(data); } catch { continue; }
+        let event;
+        try { event = JSON.parse(data); } catch { continue; }
 
-      const delta = extractSSEDelta(provider, event);
+        // Surface mid-stream error events instead of silently dropping them.
+        if (event?.type === 'error' || event?.error) {
+          const message = event.error?.message
+            || event.message
+            || 'El proveedor devolvió un error durante la respuesta.';
+          throw new Error(message);
+        }
 
-      if (delta) {
-        fullText += delta;
-        renderMarkdown(bubbleEl, fullText);
-        scrollToBottom();
+        const delta = extractSSEDelta(provider, event);
+
+        if (delta) {
+          fullText += delta;
+          renderMarkdown(bubbleEl, fullText);
+          scrollToBottom();
+        }
       }
     }
+  } catch (err) {
+    // Cancel the underlying connection before propagating so it is not leaked.
+    reader.cancel().catch(() => {});
+    throw err;
   }
 
   renderMarkdown(bubbleEl, fullText);
