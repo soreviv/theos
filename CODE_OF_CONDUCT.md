@@ -135,9 +135,12 @@ Inspirados en la Sección 4 del Código ACM, todas las personas colaboradoras
 se comprometen a defender y respetar estos principios, y a tratar sus
 violaciones como incompatibles con la participación en este proyecto.
 
-Los casos de comportamiento abusivo, acosador o inaceptable pueden reportarse
-abriendo un issue con la etiqueta `conduct`, o contactando directamente al
-mantenedor del repositorio. Todas las quejas serán revisadas e investigadas,
+Los casos de comportamiento abusivo, acosador o inaceptable deben reportarse
+de forma **privada**, contactando directamente al mantenedor del repositorio
+(por ejemplo, a través del correo asociado a su perfil de GitHub). No se debe
+usar un issue público para este tipo de reportes, ya que expondría a la
+persona afectada y los detalles del caso a toda la comunidad. Todas las
+quejas serán revisadas e investigadas,
 y darán lugar a la respuesta que se considere necesaria y adecuada a las
 circunstancias. El equipo mantenedor está obligado a mantener la
 confidencialidad respecto a quien reporte un incidente.
