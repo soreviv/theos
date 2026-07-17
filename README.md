@@ -11,7 +11,7 @@ Aplicación web de chat con un agente teólogo católico, compatible con proveed
 3. Haz clic en el icono ⚙ (Configuración) e introduce tu API key del proveedor que quieras usar.
 4. Escribe tu pregunta. Enter para enviar, Shift+Enter para nueva línea.
 
-No se necesita servidor, npm ni ningún paso de compilación si abres `index.html` como archivo local. La key se guarda solo en `sessionStorage` y se borra al cerrar la pestaña.
+No se necesita servidor, npm ni ningún paso de compilación si abres `index.html` como archivo local. La key se mantiene solo en memoria mientras la pestaña está abierta; no se guarda en el navegador y se borra al recargar o cerrar la pestaña.
 
 Este modo es solo para desarrollo o uso personal. En cualquier despliegue web público, Theos desactiva el modo directo y requiere el proxy para proteger las API keys.
 
@@ -86,7 +86,7 @@ Seleccionable en el panel de Configuración sin cambiar código. En modo proxy, 
 
 | Modo | ¿Dónde vive la key? | ¿Visible en DevTools? | Recomendado para |
 |------|--------------------|-----------------------|------------------|
-| Local (`index.html`) | `sessionStorage` del navegador | Sí, en cabeceras | Desarrollo o uso personal |
+| Local (`index.html`) | Solo en memoria (no se persiste) | Sí, en cabeceras | Desarrollo o uso personal |
 | Proxy (`server.js`) | `.env` en el servidor | No | Despliegue público y Play Store |
 
 Consulta [SECURITY.md](SECURITY.md) para más detalles.

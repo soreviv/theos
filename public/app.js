@@ -704,10 +704,6 @@ function attachEvents() {
 
   // Do not persist API keys in browser storage; keep only in-memory input state.
   DOM.apiKeyInput.addEventListener('input', () => {
-    const val = DOM.apiKeyInput.value.trim();
-    if (!val) {
-      // No persisted key to clear.
-    }
     // Refresh welcome hint
     if (DOM.messages.querySelector('.welcome')) renderWelcome();
   });
@@ -724,10 +720,10 @@ function attachEvents() {
 // 10. INITIALISATION
 // ──────────────────────────────────────────────────────────────
 async function init() {
-  // Restore API key saved during this browser session
+  // API keys are never persisted; purge any key stored by older versions.
   try {
-    const saved = sessionStorage.getItem('theos_key');
-    if (saved) DOM.apiKeyInput.value = saved;
+    sessionStorage.removeItem('theos_key');
+    localStorage.removeItem('theos_key');
   } catch { /* ignore */ }
 
   // Bootstrap provider/model selectors with default provider (gemini)
