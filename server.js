@@ -326,16 +326,38 @@ app.post('/api/chat', rateLimit, async (req, res) => {
       return res.status(upstream.status).send(errBody);
     }
 
+    if (!upstream.body) {
+      return res.status(502).json({ error: { message: 'El proveedor no devolvio ningun contenido.' } });
+    }
+
     res.setHeader('Content-Type',  upstream.headers.get('content-type') || 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection',    'keep-alive');
     res.setHeader('X-Provider',    provider);
 
     const reader = upstream.body.getReader();
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) { res.end(); return; }
-      res.write(value);
+
+    // Abort the upstream read if the client disconnects mid-stream.
+    res.on('close', () => { reader.cancel().catch(() => {}); });
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        res.write(value);
+      }
+      res.end();
+    } catch (streamErr) {
+      console.error('[theos] Stream error:', streamErr.message);
+      reader.cancel().catch(() => {});
+      if (!res.headersSent) {
+        res.status(502).json({ error: { message: 'Proxy error: ' + streamErr.message } });
+      } else if (!res.writableEnded) {
+        // The response is already streaming, so surface the failure as an SSE
+        // error event instead of leaving the connection hanging.
+        res.write(`event: error\ndata: ${JSON.stringify({ error: { message: streamErr.message } })}\n\n`);
+        res.end();
+      }
     }
 
   } catch (err) {
@@ -355,8 +377,12 @@ export function startServer(port = PORT) {
   if (availableProviders.length === 0) {
     throw new Error('No API keys configured. Add at least one to .env');
   }
-  return new Promise((resolve) => {
-    createServer(app).listen(port, () => {
+  return new Promise((resolve, reject) => {
+    const server = createServer(app);
+    server.once('error', reject);
+    server.listen(port, () => {
+      server.removeListener('error', reject);
+      server.on('error', (err) => console.error('[theos] Server error:', err.message));
       console.log(`[theos] Running at http://localhost:${port}`);
       console.log(`[theos] Providers: ${availableProviders.join(', ')}`);
       resolve(port);
