@@ -53,6 +53,7 @@ theos/
 ├── .env.example      # Plantilla de variables de entorno
 ├── .gitignore        # Excluye .env y node_modules
 ├── SECURITY.md       # Política de seguridad
+├── CODE_OF_CONDUCT.md # Código de conducta
 └── LICENSE           # MIT
 ```
 
@@ -90,6 +91,14 @@ Seleccionable en el panel de Configuración sin cambiar código. En modo proxy, 
 | Proxy (`server.js`) | `.env` en el servidor | No | Despliegue público y Play Store |
 
 Consulta [SECURITY.md](SECURITY.md) para más detalles.
+
+---
+
+## Código de conducta
+
+Este proyecto sigue un [Código de Conducta](CODE_OF_CONDUCT.md) inspirado en
+el [ACM Code of Ethics](https://www.acm.org/code-of-ethics). Se espera que
+toda persona colaboradora lo respete.
 
 ---
 
