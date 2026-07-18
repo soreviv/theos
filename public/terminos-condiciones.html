@@ -7,6 +7,19 @@
   <meta name="description" content="Términos y condiciones de uso de Theos. Herramienta educativa de teología católica impulsada por IA. Sin valor magisterial ni sustitución de dirección espiritual." />
   <meta name="robots" content="index, follow" />
   <link rel="canonical" href="https://viveros.click/terminos-condiciones" />
+  <meta name="theme-color" content="#0f1a2e" />
+  <meta name="color-scheme" content="dark light" />
+  <script>
+    (function () {
+      try {
+        if (localStorage.getItem('theos-theme') === 'light') {
+          document.documentElement.setAttribute('data-theme', 'light');
+          var m = document.querySelector('meta[name="theme-color"]');
+          if (m) m.setAttribute('content', '#f7f8fa');
+        }
+      } catch (e) {}
+    })();
+  </script>
   <link rel="stylesheet" href="style.css" />
   <style>
     body { overflow: auto; height: auto; min-height: 100dvh; }
@@ -68,8 +81,8 @@
     }
     .doc-section-header .sec-num {
       font-family: var(--font-serif); font-size: .8rem; font-weight: 700;
-      color: var(--color-accent); background: white;
-      border: 1px solid rgba(107,63,42,.2); border-radius: 50%;
+      color: var(--color-accent); background: var(--color-surface);
+      border: 1px solid var(--color-border); border-radius: 50%;
       width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;
       flex-shrink: 0;
     }
@@ -91,7 +104,7 @@
 
     .canon-box {
       background: var(--color-accent-light);
-      border: 1px solid rgba(107,63,42,.25);
+      border: 1px solid var(--color-border);
       border-left: 4px solid var(--color-accent);
       border-radius: var(--radius-sm);
       padding: 16px 18px; margin: 14px 0 0;
@@ -100,11 +113,11 @@
     .canon-box strong { color: var(--color-accent); }
 
     .warning-box {
-      background: #fff8e1; border: 1px solid #f0d060;
+      background: var(--color-warn-bg); border: 1px solid var(--color-warn-border);
       border-radius: var(--radius-sm); padding: 14px 18px;
-      font-size: .88rem; color: #6b5200; line-height: 1.6; margin: 12px 0 0;
+      font-size: .88rem; color: var(--color-warn-text); line-height: 1.6; margin: 12px 0 0;
     }
-    .warning-box strong { color: #5a4400; }
+    .warning-box strong { color: var(--color-warn-text); }
 
     .doc-footer {
       margin-top: 40px; text-align: center;

@@ -7,6 +7,19 @@
   <meta name="description" content="Fuentes oficiales en las que se fundamentan las respuestas de Theos: Biblia, Vaticano II, Padres de la Iglesia, Catecismo y más." />
   <meta name="robots" content="index, follow" />
   <link rel="canonical" href="https://viveros.click/marco-referencia" />
+  <meta name="theme-color" content="#0f1a2e" />
+  <meta name="color-scheme" content="dark light" />
+  <script>
+    (function () {
+      try {
+        if (localStorage.getItem('theos-theme') === 'light') {
+          document.documentElement.setAttribute('data-theme', 'light');
+          var m = document.querySelector('meta[name="theme-color"]');
+          if (m) m.setAttribute('content', '#f7f8fa');
+        }
+      } catch (e) {}
+    })();
+  </script>
   <link rel="stylesheet" href="style.css" />
   <style>
     /* ── Page layout ───────────────────────────────────────── */
@@ -183,7 +196,7 @@
       font-size: .85rem;
       color: var(--color-accent);
       background: var(--color-accent-light);
-      border: 1px solid rgba(107,63,42,.15);
+      border: 1px solid var(--color-border);
       border-radius: 20px;
       padding: 3px 12px;
     }
@@ -237,15 +250,15 @@
     .ref-disclaimer {
       margin-top: 48px;
       padding: 18px 22px;
-      background: #fff8e1;
-      border: 1px solid #f0d060;
+      background: var(--color-warn-bg);
+      border: 1px solid var(--color-warn-border);
       border-radius: var(--radius-sm);
       font-size: .85rem;
-      color: #6b5200;
+      color: var(--color-warn-text);
       line-height: 1.6;
       text-align: center;
     }
-    .ref-disclaimer strong { color: #5a4400; }
+    .ref-disclaimer strong { color: var(--color-warn-text); }
 
     /* ── Responsive ────────────────────────────────────────── */
     @media (max-width: 600px) {
