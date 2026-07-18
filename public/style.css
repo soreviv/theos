@@ -8,41 +8,51 @@
 
 /* ============================================================
    CSS Custom Properties
-   Dark-first (:root) warm-gold system. Light preserved as a
-   secondary theme via [data-theme="light"].
+   Dark-first (:root) deep-navy + gold system. Light preserved
+   as a secondary theme via [data-theme="light"].
+   Values track the Theos design system.
    ============================================================ */
 :root {
   color-scheme: dark;
 
-  /* Surfaces — warm near-black, never cool/blue-black */
-  --color-bg:            #17140f;
-  --color-surface:       #211c15;
-  --color-border:        #332b20;
+  /* Surfaces — deep navy, warmed only by the gold accent */
+  --color-bg:            #0f1a2e;
+  --color-bg-inset:      #0a1322;   /* recessed wells (code, inputs) */
+  --color-surface:       #16233b;
+  --color-surface-2:     #1c2c47;   /* raised panels */
+  --color-surface-hover: #233655;
+  --color-border:        #2d3f5e;
+  --color-border-strong: #3d5274;
 
   /* Accent — one muted-gold family carries all interactive emphasis */
   --color-accent:        #c9a15a;
-  --color-accent-hover:  #d9b877;   /* lighter gold for primary-button hover */
+  --color-accent-hover:  #d9b473;   /* lighter gold for primary-button hover */
   --color-accent-light:  rgba(201,161,90,.14);  /* ~12% tint wash for hover states */
-  --color-on-accent:     #17140f;   /* ink on gold surfaces (user bubble, send btn) */
-  --color-accent-crimson:#9c443d;   /* optional traditional/liturgical accent, non-interactive */
+  --color-on-accent:     #241505;   /* ink on gold surfaces (user bubble, send btn) */
+  --color-accent-crimson:#8c1f3b;   /* optional traditional/liturgical accent, non-interactive */
   --color-focus-ring:    rgba(201,161,90,.28);
 
+  /* Links */
+  --color-link:          #d9b96a;
+  --color-link-hover:    #e8c980;
+
   /* Text */
-  --color-text:          #ece5d8;
-  --color-text-muted:    #a89b86;
+  --color-text:          #f2ead9;
+  --color-text-muted:    #a3b0c4;
+  --color-text-faint:    #69758c;
 
   /* Code */
-  --color-code-bg:       #17130d;
+  --color-code-bg:       #0a1322;
 
   /* Semantic — error */
-  --color-error-bg:      #2a1512;
-  --color-error-border:  #5c2a24;
-  --color-error-text:    #f0a99f;
+  --color-error-bg:      #2e1712;
+  --color-error-border:  #6b2f24;
+  --color-error-text:    #e2a294;
 
   /* Semantic — warning */
-  --color-warn-bg:       #2a2210;
-  --color-warn-border:   #5c4a1e;
-  --color-warn-text:     #e8c874;
+  --color-warn-bg:       #2c2310;
+  --color-warn-border:   #6b5518;
+  --color-warn-text:     #e0bd68;
 
   /* Semantic — success */
   --color-success:       #7bbf80;
@@ -53,34 +63,49 @@
 
   --radius:      12px;
   --radius-sm:   6px;
+  --radius-lg:   20px;
+  --radius-full: 999px;
   --max-width:   780px;
   --header-h:    56px;
   --footer-h:    auto;
-  --shadow-sm:   0 1px 3px rgba(0,0,0,.45);
-  --shadow-md:   0 6px 24px rgba(0,0,0,.55);
 
-  --transition:  .22s ease;
+  --shadow-color: 220deg 45% 6%;
+  --shadow-sm:   0 1px 3px hsl(var(--shadow-color) / .3);
+  --shadow-md:   0 4px 16px hsl(var(--shadow-color) / .35);
+  --shadow-lg:   0 12px 32px hsl(var(--shadow-color) / .4);
+
+  --transition-fast: .15s ease;
+  --transition:      .22s ease;
+  --transition-slow: .32s cubic-bezier(.4,0,.2,1);
 }
 
-/* ---- Light theme (secondary) — close to the original app palette ---- */
+/* ---- Light theme (secondary) — cool grey-blue with the same gold ---- */
 [data-theme="light"] {
   color-scheme: light;
 
-  --color-bg:            #f9f7f4;
+  --color-bg:            #f7f8fa;
+  --color-bg-inset:      #eef1f5;
   --color-surface:       #ffffff;
-  --color-border:        #e8e2d9;
+  --color-surface-2:     #eef1f5;
+  --color-surface-hover: #e3e8ef;
+  --color-border:        #d9e0ea;
+  --color-border-strong: #c3ceda;
 
   --color-accent:        #8a5a2b;
-  --color-accent-hover:  #a06a34;
-  --color-accent-light:  rgba(138,90,43,.10);
-  --color-on-accent:     #ffffff;
-  --color-accent-crimson:#7a2f2a;
+  --color-accent-hover:  #71491f;
+  --color-accent-light:  rgba(138,90,43,.09);
+  --color-on-accent:     #fffaf2;
+  --color-accent-crimson:#7a1830;
   --color-focus-ring:    rgba(138,90,43,.15);
 
-  --color-text:          #2d2418;
-  --color-text-muted:    #8a7a6a;
+  --color-link:          #8a5a2b;
+  --color-link-hover:    #71491f;
 
-  --color-code-bg:       #f3ede8;
+  --color-text:          #111a2c;
+  --color-text-muted:    #5c6b83;
+  --color-text-faint:    #8b9aad;
+
+  --color-code-bg:       #eef1f5;
 
   --color-error-bg:      #fff0ee;
   --color-error-border:  #f5c6c0;
@@ -88,12 +113,13 @@
 
   --color-warn-bg:       #fff8e1;
   --color-warn-border:   #f0d060;
-  --color-warn-text:     #7a5c00;
+  --color-warn-text:     #6b5200;
 
   --color-success:       #2e7d32;
 
   --shadow-sm:   0 1px 3px rgba(0,0,0,.07);
   --shadow-md:   0 4px 16px rgba(0,0,0,.10);
+  --shadow-lg:   0 16px 40px rgba(0,0,0,.14);
 }
 
 /* ============================================================
