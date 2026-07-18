@@ -7,7 +7,7 @@ Aplicación web de chat con un agente teólogo católico, compatible con proveed
 ## Uso rápido local (sin backend)
 
 1. Clona o descarga el repositorio.
-2. Abre `index.html` directamente en tu navegador.
+2. Abre `public/index.html` directamente en tu navegador.
 3. Haz clic en el icono ⚙ (Configuración) e introduce tu API key del proveedor que quieras usar.
 4. Escribe tu pregunta. Enter para enviar, Shift+Enter para nueva línea.
 
@@ -44,17 +44,26 @@ Abre `http://localhost:3000`. El frontend detecta el proxy automáticamente y oc
 
 ```
 theos/
-├── index.html        # Shell de la interfaz de chat
-├── style.css         # Estilos — estética minimalista católica
-├── app.js            # Toda la lógica: estado, streaming SSE, Markdown, proxy
-├── server.js         # Proxy Express de producción (protege API keys y valida requests)
-├── system-prompt.js  # Prompt del sistema controlado por servidor
-├── package.json      # Dependencias del servidor (dotenv, express)
-├── .env.example      # Plantilla de variables de entorno
-├── .gitignore        # Excluye .env y node_modules
-├── SECURITY.md       # Política de seguridad
-├── CODE_OF_CONDUCT.md # Código de conducta
-└── LICENSE           # MIT
+├── public/                     # Frontend estático (servido por el proxy o abierto directo)
+│   ├── index.html              # Shell de la interfaz de chat
+│   ├── marco-referencia.html   # Fuentes y marco de referencia doctrinal
+│   ├── aviso-privacidad.html   # Aviso de privacidad
+│   ├── terminos-condiciones.html
+│   ├── style.css               # Sistema de diseño (tokens navy + oro, temas claro/oscuro)
+│   ├── fonts.css               # Fuentes auto-hospedadas (Spectral, Public Sans, IBM Plex Mono)
+│   ├── fonts/                  # Archivos .woff2 (sin CDN, por la CSP estricta)
+│   ├── app.js                  # Lógica: estado, streaming SSE, Markdown, detección de proxy
+│   ├── shared/providers.js     # Catálogo de proveedores/modelos compartido
+│   └── robots.txt · sitemap.xml
+├── server.js                   # Proxy Express de producción (protege API keys y valida requests)
+├── system-prompt.js            # Prompt del sistema controlado por servidor
+├── electron-main.js            # Empaquetado de escritorio (Electron)
+├── package.json                # Dependencias del servidor (dotenv, express)
+├── .env.example                # Plantilla de variables de entorno
+├── .gitignore                  # Excluye .env y node_modules
+├── SECURITY.md                 # Política de seguridad
+├── CODE_OF_CONDUCT.md          # Código de conducta
+└── LICENSE                     # MIT
 ```
 
 ---
@@ -66,20 +75,23 @@ theos/
 - **Detección de contexto** — el system prompt identifica el perfil del interlocutor antes de responder
 - **Diálogo interreligioso** — Islam, Hinduismo, Budismo, Judaísmo, Iglesia Ortodoxa
 - **Reporte de respuestas** — los usuarios pueden reportar contenido doctrinalmente problemático, ofensivo o inseguro
-- **Dual-mode controlado** — modo local solo al abrir `index.html`; despliegues web usan proxy
+- **Dual-mode controlado** — modo local solo al abrir `public/index.html`; despliegues web usan proxy
 - **Responsive** — adaptado a móvil
-- **Sin dependencias de frontend** — marked.js y DOMPurify se cargan desde CDN, sin npm para el frontend
+- **Sistema de diseño con temas** — dark-first (navy profundo + acento dorado), tema claro secundario vía `data-theme="light"`; todo sobre tokens CSS y fuentes auto-hospedadas
+- **Sin dependencias de frontend** — marked.js y DOMPurify se cargan desde CDN (fijados + SRI), sin npm para el frontend
 
 ---
 
-## Modelos disponibles
+## Proveedores y modelos disponibles
 
-| Modelo | Velocidad | Profundidad |
-|--------|-----------|-------------|
-| `claude-sonnet-4-6` | Rápido | Alta (recomendado) |
-| `claude-opus-4-6` | Más lento | Máxima |
+| Proveedor | Modelos |
+|-----------|---------|
+| Anthropic (Claude) | `claude-sonnet-4-6`, `claude-opus-4-6` |
+| OpenAI (ChatGPT) | `gpt-4o`, `gpt-4o-mini`, `gpt-4.1` |
+| Google (Gemini) | `gemini-3-flash-preview`, `gemini-2.5-flash` |
+| Mistral AI | `mistral-large-latest`, `mistral-small-latest`, `open-mixtral-8x22b` |
 
-Seleccionable en el panel de Configuración sin cambiar código. En modo proxy, el servidor valida que el modelo solicitado esté permitido.
+Proveedor y modelo se eligen en el panel de Configuración sin cambiar código. En modo proxy, el servidor valida que el proveedor y el modelo solicitados estén permitidos.
 
 ---
 
@@ -87,7 +99,7 @@ Seleccionable en el panel de Configuración sin cambiar código. En modo proxy, 
 
 | Modo | ¿Dónde vive la key? | ¿Visible en DevTools? | Recomendado para |
 |------|--------------------|-----------------------|------------------|
-| Local (`index.html`) | Solo en memoria (no se persiste) | Sí, en cabeceras | Desarrollo o uso personal |
+| Local (`public/index.html`) | Solo en memoria (no se persiste) | Sí, en cabeceras | Desarrollo o uso personal |
 | Proxy (`server.js`) | `.env` en el servidor | No | Despliegue público y Play Store |
 
 Consulta [SECURITY.md](SECURITY.md) para más detalles.
