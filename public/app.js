@@ -202,8 +202,8 @@ const PROVIDERS = {
     keyLabel:    'API Key de Google AI',
     keyHint:     'AIza...',
     models: [
-      { value: 'gemini-3-flash-preview',         label: 'gemini-3-flash-preview (recomendado)' },
-      { value: 'gemini-2.5-flash',              label: 'gemini-2.5-flash' },
+      { value: 'gemini-3.6-flash',  label: 'gemini-3.6-flash (recomendado, equilibrado)' },
+      { value: 'gemini-2.5-flash',  label: 'gemini-2.5-flash (más ligero)' },
     ],
   },
   mistral: {

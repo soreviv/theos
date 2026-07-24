@@ -1,7 +1,11 @@
 {
   "name": "theos",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Catholic theologian chatbot — Anthropic API proxy",
+  "author": {
+    "name": "Alejandro Viveros Dominguez",
+    "email": "alex@viveros.click"
+  },
   "type": "module",
   "main": "electron-main.js",
   "scripts": {
@@ -37,7 +41,10 @@
     ],
     "linux": {
       "target": ["AppImage", "deb"],
-      "category": "Education"
+      "category": "Education",
+      "icon": "build/icons",
+      "executableName": "theos",
+      "syncDesktopName": true
     },
     "win": {
       "target": "nsis"
