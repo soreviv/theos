@@ -19,7 +19,7 @@
     "build:mac": "electron-builder --mac"
   },
   "dependencies": {
-    "dotenv": "^16.4.5",
+    "dotenv": "^17.4.2",
     "express": "^4.22.2"
   },
   "engines": {
