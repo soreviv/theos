@@ -89,6 +89,19 @@ test('sanitizeMessages: rejects content longer than MAX_MESSAGE_CHARS', () => {
   );
 });
 
+test('sanitizeMessages: does NOT apply the char limit to assistant messages', () => {
+  // Assistant output is bounded by MAX_TOKENS, not MAX_MESSAGE_CHARS; a long
+  // reply must not block the conversation from continuing on the next turn.
+  const out = sanitizeMessages([
+    { role: 'assistant', content: 'y'.repeat(500) },
+    { role: 'user', content: 'sigue' },
+  ]);
+  assert.deepEqual(out, [
+    { role: 'assistant', content: 'y'.repeat(500) },
+    { role: 'user', content: 'sigue' },
+  ]);
+});
+
 test('sanitizeMessages: requires the final message to be from the user', () => {
   assert.throws(
     () => sanitizeMessages([
