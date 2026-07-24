@@ -20,7 +20,7 @@ dotenv.config();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const STATIC_DIR = path.join(__dirname, 'public');
 const PORT = process.env.PORT || 3000;
-const MAX_TOKENS = Number.parseInt(process.env.MAX_TOKENS || '2048', 10);
+const MAX_TOKENS = Number.parseInt(process.env.MAX_TOKENS || '4096', 10);
 const MAX_MESSAGES = Number.parseInt(process.env.MAX_MESSAGES || '24', 10);
 const MAX_MESSAGE_CHARS = Number.parseInt(process.env.MAX_MESSAGE_CHARS || '4000', 10);
 const MAX_REPORT_CONTENT_CHARS = Number.parseInt(process.env.MAX_REPORT_CONTENT_CHARS || '6000', 10);
@@ -168,7 +168,10 @@ function sanitizeMessages(rawMessages) {
       if (!content) {
         throw new Error('El historial contiene un mensaje vacio.');
       }
-      if (content.length > MAX_MESSAGE_CHARS) {
+      // The char cap guards user input only. Assistant replies are already
+      // bounded by MAX_TOKENS, and re-validating them here would reject a long
+      // answer on the next turn and block the conversation from continuing.
+      if (message.role === 'user' && content.length > MAX_MESSAGE_CHARS) {
         throw new Error(`Cada mensaje debe tener ${MAX_MESSAGE_CHARS} caracteres o menos.`);
       }
 
