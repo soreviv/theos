@@ -4,6 +4,9 @@
 # Node
 node_modules/
 
+# Build artifacts (electron-builder output)
+dist/
+
 # OS
 .DS_Store
 Thumbs.db

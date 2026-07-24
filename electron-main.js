@@ -1,8 +1,17 @@
 import { app, BrowserWindow, dialog } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import dotenv from 'dotenv';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// The app code lives inside a read-only asar archive, so the user's API keys
+// must come from a writable location. Load them from <userData>/.env
+// (e.g. ~/.config/theos/.env on Linux) BEFORE server.js is imported, because
+// server.js reads process.env.*_API_KEY at module-load time.
+const userEnvPath = path.join(app.getPath('userData'), '.env');
+dotenv.config({ path: userEnvPath });
+
 let mainWindow;
 let serverPort = null;
 
@@ -14,7 +23,7 @@ async function createWindow() {
     } catch (err) {
       dialog.showErrorBox(
         'Error de configuración',
-        `${err.message}\n\nCrea un archivo .env en:\n${__dirname}\n\nEjemplo:\nANTHROPIC_API_KEY=sk-ant-...`
+        `${err.message}\n\nCrea un archivo .env en:\n${userEnvPath}\n\nEjemplo:\nANTHROPIC_API_KEY=sk-ant-...`
       );
       app.quit();
       return;
