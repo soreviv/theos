@@ -125,6 +125,24 @@ Cualquier plataforma que ejecute Node.js ≥ 18 sirve (Railway, Render, Fly.io, 
 
 Para plataformas serverless (Cloudflare Workers, Vercel Edge Functions), el endpoint `POST /api/chat` de `server.js` es fácilmente portable — la lógica es un `fetch` con streaming piped de vuelta.
 
+### VPS propio con Nginx + PM2
+
+Para un VPS (Nginx como reverse proxy delante de Node, gestionado con PM2),
+usa la configuración de referencia en [`deploy/`](deploy/README.md):
+
+```bash
+sudo cp deploy/nginx/nginx.conf /etc/nginx/nginx.conf
+sudo cp deploy/nginx/theos.conf /etc/nginx/sites-available/theos.conf
+sudo ln -s /etc/nginx/sites-available/theos.conf /etc/nginx/sites-enabled/theos.conf
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+Puntos clave de esa config: Nginx solo hace de proxy inverso hacia
+`127.0.0.1:3000` (los estáticos ya los sirve `express.static` en
+`server.js`), `proxy_buffering off` en `/api/chat` para no romper el
+streaming SSE, y cabeceras `X-Forwarded-*` que requieren `TRUST_PROXY=1`
+en `.env`. Detalles completos en [`deploy/README.md`](deploy/README.md).
+
 ---
 
 ## Licencia
